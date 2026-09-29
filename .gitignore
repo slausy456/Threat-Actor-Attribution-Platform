@@ -1,0 +1,25 @@
+# Data - never commit real or downloaded datasets
+data/raw/*
+data/processed/*
+data/veridark/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/veridark/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Env
+.env
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Neo4j / Postgres local volumes
+docker/data/
