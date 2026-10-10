@@ -31,10 +31,16 @@ def compare(a: Persona, b: Persona) -> SignalResult
 | infra_only | yes | low | high | high |
 | style_only | yes | low | low | high |
 | multi_signal | yes | high | high | high |
+| pgp_restyled / wallet_restyled | yes (changed style) | high | low | **low (blind)** |
+| infra_restyled | yes (changed style) | low | high | **low (blind)** |
 | shared_hosting | no | low | **must stay low** | low |
 | copycat_style | no | low | low | **must stay low** |
 | similar_handle | no | **must stay low** | low | low |
 | random | no | low | low | low |
+
+The `*_restyled` rows are where fusion earns its keep: stylometry cannot help there, so the
+identity or infrastructure pillar must carry the match. Stylometry is not required to score
+low on them (it simply has no style signal to use); the acceptance check reports them as its blind spots.
 
 Honest note: synthetic style text is easy, so don't over-trust a stylometry score
 of 1.0 here. The real test is VeriDark later.

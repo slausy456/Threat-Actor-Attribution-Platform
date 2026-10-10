@@ -1,0 +1,7 @@
+{
+  "intercept": -2.946513511852086,
+  "identity_graph": 5.435351019529443,
+  "infrastructure": 4.459861983495649,
+  "stylometry": 4.729835109575675,
+  "oof_decision_threshold": 0.23307732774417655
+}

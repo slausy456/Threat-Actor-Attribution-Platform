@@ -248,6 +248,69 @@
       "persona_ids": [
         "P054"
       ]
+    },
+    {
+      "actor_id": "A040",
+      "persona_ids": [
+        "P055",
+        "P056"
+      ]
+    },
+    {
+      "actor_id": "A041",
+      "persona_ids": [
+        "P057",
+        "P058"
+      ]
+    },
+    {
+      "actor_id": "A042",
+      "persona_ids": [
+        "P059",
+        "P060"
+      ]
+    },
+    {
+      "actor_id": "A043",
+      "persona_ids": [
+        "P061",
+        "P062"
+      ]
+    },
+    {
+      "actor_id": "A044",
+      "persona_ids": [
+        "P063",
+        "P064"
+      ]
+    },
+    {
+      "actor_id": "A045",
+      "persona_ids": [
+        "P065",
+        "P066"
+      ]
+    },
+    {
+      "actor_id": "A046",
+      "persona_ids": [
+        "P067",
+        "P068"
+      ]
+    },
+    {
+      "actor_id": "A047",
+      "persona_ids": [
+        "P069",
+        "P070"
+      ]
+    },
+    {
+      "actor_id": "A048",
+      "persona_ids": [
+        "P071",
+        "P072"
+      ]
     }
   ],
   "pairs": [
@@ -514,6 +577,60 @@
       "persona_b": "P003",
       "same_actor": false,
       "scenario": "random"
+    },
+    {
+      "persona_a": "P055",
+      "persona_b": "P056",
+      "same_actor": true,
+      "scenario": "pgp_restyled"
+    },
+    {
+      "persona_a": "P057",
+      "persona_b": "P058",
+      "same_actor": true,
+      "scenario": "pgp_restyled"
+    },
+    {
+      "persona_a": "P059",
+      "persona_b": "P060",
+      "same_actor": true,
+      "scenario": "pgp_restyled"
+    },
+    {
+      "persona_a": "P061",
+      "persona_b": "P062",
+      "same_actor": true,
+      "scenario": "wallet_restyled"
+    },
+    {
+      "persona_a": "P063",
+      "persona_b": "P064",
+      "same_actor": true,
+      "scenario": "wallet_restyled"
+    },
+    {
+      "persona_a": "P065",
+      "persona_b": "P066",
+      "same_actor": true,
+      "scenario": "wallet_restyled"
+    },
+    {
+      "persona_a": "P067",
+      "persona_b": "P068",
+      "same_actor": true,
+      "scenario": "infra_restyled"
+    },
+    {
+      "persona_a": "P069",
+      "persona_b": "P070",
+      "same_actor": true,
+      "scenario": "infra_restyled"
+    },
+    {
+      "persona_a": "P071",
+      "persona_b": "P072",
+      "same_actor": true,
+      "scenario": "infra_restyled"
     }
   ]
 }

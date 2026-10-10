@@ -24,6 +24,12 @@ handles well or badly. Scenarios:
     infra_only       shares cert/favicon only (no shared identifiers)
     style_only       shares NOTHING except writing style  <- the hard case
     multi_signal     shares PGP + wallet + infra (easy, high confidence)
+    pgp_restyled     shares a PGP key, but the actor DELIBERATELY changed writing style
+    wallet_restyled  shares a wallet, but the actor changed writing style
+    infra_restyled   shares cert/favicon, but the actor changed writing style
+                     (the three *_restyled scenarios are where stylometry is blind and
+                      the other pillars must carry the match; they are generated last
+                      so the earlier personas and pairs are unchanged)
 
   Different actors (should NOT match):
     shared_hosting   same generic server banner (weak infra signal = trap)
@@ -127,6 +133,17 @@ class StyleProfile:
         self.opener = rng.choice(OPENERS)
         self.closer = rng.choice(CLOSERS)
 
+    def is_distinct_from(self, other: "StyleProfile") -> bool:
+        """True if an actor switching from self to other really changed habits:
+        at least one directly observable habit differs, and no shared misspellings,
+        catchphrases, opener or closer carry over."""
+        observable = (self.lowercase != other.lowercase) or (self.end_punct != other.end_punct)
+        return (observable
+                and not (set(self.typos) & set(other.typos))
+                and not (set(self.phrases) & set(other.phrases))
+                and self.opener != other.opener
+                and self.closer != other.closer)
+
     def write(self) -> str:
         def one() -> str:
             return rng.choice(TEMPLATES).format(item=rng.choice(ITEMS), n=rng.choice([12, 24, 48]))
@@ -179,6 +196,15 @@ def fresh_ids(pgp=True, wallet=True, infra=True) -> list[Identifier]:
 
 def pick(ids: list[Identifier], *types: T) -> list[Identifier]:
     return [i for i in ids if i.type in types]
+
+
+def distinct_style_pair() -> tuple["StyleProfile", "StyleProfile"]:
+    """Two style profiles for ONE actor who deliberately changes how they write."""
+    a = StyleProfile()
+    while True:
+        b = StyleProfile()
+        if a.is_distinct_from(b):
+            return a, b
 
 
 def two_markets() -> tuple[str, str]:
@@ -278,6 +304,28 @@ def build() -> tuple[list[Persona], list[Actor], list[PairLabel]]:
             seen.add(frozenset((a, b)))
             pairs.append(PairLabel(persona_a=a, persona_b=b, same_actor=False, scenario="random"))
             added += 1
+
+    # ---- RESTYLED same-actor scenarios. Appended LAST on purpose: the generator is
+    # sequential, so everything above stays byte-identical to the earlier dataset.
+    for scenario in ["pgp_restyled"] * 3 + ["wallet_restyled"] * 3 + ["infra_restyled"] * 3:
+        style_a, style_b = distinct_style_pair()
+        base = fresh_ids()
+        m1, m2 = two_markets()
+        if scenario == "pgp_restyled":
+            shared = pick(base, T.PGP_KEY)
+            p1 = new_persona(style_a, m1, identifiers=shared + fresh_ids(pgp=False, infra=True))
+            p2 = new_persona(style_b, m2, identifiers=shared + fresh_ids(pgp=False, infra=True))
+        elif scenario == "wallet_restyled":
+            shared = pick(base, T.WALLET)
+            p1 = new_persona(style_a, m1, identifiers=shared + fresh_ids(wallet=False, infra=True))
+            p2 = new_persona(style_b, m2, identifiers=shared + fresh_ids(wallet=False, infra=True))
+        else:  # infra_restyled
+            shared = pick(base, T.CERT_HASH, T.FAVICON_HASH)
+            p1 = new_persona(style_a, m1, identifiers=fresh_ids(infra=False) + shared)
+            p2 = new_persona(style_b, m2, identifiers=fresh_ids(infra=False) + shared)
+        register(p1, p2)
+        pairs.append(PairLabel(persona_a=p1.persona_id, persona_b=p2.persona_id,
+                               same_actor=True, scenario=scenario))
 
     return personas, actors, pairs
 

@@ -13,7 +13,9 @@ What it does
   2. STATIC RULES: pillar/fusion code must not read ground-truth labels or scenario
      names (that would be cheating), and nothing may touch Tor / live scanning.
   3. BEHAVIOUR: each pillar must win the scenarios it should win and stay low on its
-     trap. Fusion must beat every single pillar. Explanations must be grounded.
+     trap. Fusion must beat every single pillar and also catch the *_restyled actors
+     (same actor, deliberately changed writing style) that stylometry alone cannot.
+     Explanations must be grounded.
 
 The numeric thresholds below are starting values chosen from docs/pillar_contract.md.
 They can be changed, but change them deliberately and say why in the report;
@@ -59,15 +61,20 @@ THRESHOLD = 0.50     # decision threshold for F1 / recall / false positives
 FUSED_RECALL = 0.80  # each same-actor scenario: share of pairs fused >= THRESHOLD
 FUSED_FPR = 0.20     # each different-actor scenario: share of pairs fused >= THRESHOLD
 
-SAME = ["pgp_reuse", "wallet_reuse", "infra_only", "style_only", "multi_signal"]
+SAME = ["pgp_reuse", "wallet_reuse", "infra_only", "style_only", "multi_signal",
+        "pgp_restyled", "wallet_restyled", "infra_restyled"]
+RESTYLED = ["pgp_restyled", "wallet_restyled", "infra_restyled"]  # same actor, changed writing style
 DIFF = ["shared_hosting", "copycat_style", "similar_handle", "random"]
 ALL_SCEN = SAME + DIFF
 
 EXPECT = {  # pillar -> (must be HIGH on, must stay LOW on)
-    "identity_graph": (["pgp_reuse", "wallet_reuse", "multi_signal"],
-                       ["infra_only", "style_only"] + DIFF),
-    "infrastructure_scan": (["infra_only", "multi_signal"],
-                            ["pgp_reuse", "wallet_reuse", "style_only"] + DIFF),
+    "identity_graph": (["pgp_reuse", "wallet_reuse", "multi_signal", "pgp_restyled", "wallet_restyled"],
+                       ["infra_only", "style_only", "infra_restyled"] + DIFF),
+    "infrastructure_scan": (["infra_only", "multi_signal", "infra_restyled"],
+                            ["pgp_reuse", "wallet_reuse", "style_only", "pgp_restyled",
+                             "wallet_restyled"] + DIFF),
+    # stylometry is only expected to win where the actor KEPT their style; on the
+    # *_restyled scenarios it is expected to be blind (reported as INFO, not required)
     "stylometry": (["style_only", "multi_signal", "pgp_reuse", "wallet_reuse", "infra_only"],
                    ["copycat_style", "random"]),
 }
@@ -214,13 +221,15 @@ def check_pillars(personas, pairs) -> dict[str, list[float]] | None:
             rec("FAIL" if worst >= LOW_MAX else "PASS",
                 f"{name}: no single negative pair >= {LOW_MAX}", f"worst={worst:.2f}")
         else:
-            a = auc([s for p, s in zip(pairs, scores) if p.same_actor],
+            a = auc([s for p, s in zip(pairs, scores) if p.same_actor and p.scenario not in RESTYLED],
                     [s for p, s in zip(pairs, scores) if not p.same_actor])
-            rec("FAIL" if a < STYLE_AUC else "PASS", f"stylometry: AUC >= {STYLE_AUC}", f"AUC={a:.2f}")
+            rec("FAIL" if a < STYLE_AUC else "PASS",
+                f"stylometry: AUC >= {STYLE_AUC} (actors who kept their style vs different actors)",
+                f"AUC={a:.2f}")
             gap = mean(by["style_only"]) - mean(by["copycat_style"])
             rec("FAIL" if gap < 0.15 else "PASS",
                 "stylometry: copycat clearly below real same-author", f"gap={gap:.2f}")
-        blind = [s for s in SAME if mean(by[s]) < LOW]
+        blind = [s for s in SAME if mean(by[s]) <= lo_thr]
         rec("INFO", f"{name}: blind spots (justify fusion)", ", ".join(blind) or "none")
     if table:
         print("\nmean score per scenario")

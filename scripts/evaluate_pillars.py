@@ -10,6 +10,8 @@ from collections import defaultdict
 from pathlib import Path
 from statistics import mean
 
+from sklearn.metrics import f1_score, precision_score, recall_score
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 from app.data_loader import load_ground_truth, load_personas  # noqa: E402
@@ -20,6 +22,16 @@ from app.services.stylometry import matcher as style  # noqa: E402
 
 PERSONAS = load_personas()
 _, PAIRS = load_ground_truth()
+
+
+def score_thresholds(scores: list[float], threshold: float = 0.5) -> tuple[float, float, float]:
+    labels = [p.same_actor for p in PAIRS]
+    preds = [1 if score >= threshold else 0 for score in scores]
+    return (
+        precision_score(labels, preds, zero_division=0),
+        recall_score(labels, preds, zero_division=0),
+        f1_score(labels, preds, zero_division=0),
+    )
 
 COLUMNS = {"identity": identity.compare, "infra": infra.compare, "style": style.compare}
 rows = defaultdict(lambda: defaultdict(list))
@@ -46,3 +58,21 @@ for key in sorted(order, key=lambda k: (not k[1], k[0])):
     scen, same = key
     cells = [f"{mean(rows[key][c]):>10.2f}" if rows[key][c] else f"{'—':>10}" for c in cols]
     print(f"{scen:<16}{('YES' if same else 'no'):<7}" + "".join(cells))
+
+fused_scores = [score_pair(PERSONAS[p.persona_a], PERSONAS[p.persona_b])["confidence"] for p in PAIRS]
+precision, recall, f1 = score_thresholds(fused_scores)
+print()
+print(f"overall fused precision={precision:.3f} recall={recall:.3f} f1={f1:.3f}")
+
+by_scenario: dict[str, list[float]] = defaultdict(list)
+for p, s in zip(PAIRS, fused_scores):
+    by_scenario[p.scenario].append(s)
+
+for scenario in sorted(by_scenario):
+    labels = [p.same_actor for p in PAIRS if p.scenario == scenario]
+    preds = [1 if score >= 0.5 else 0 for score in by_scenario[scenario]]
+    print(
+        f"{scenario}: precision={precision_score(labels, preds, zero_division=0):.3f}, "
+        f"recall={recall_score(labels, preds, zero_division=0):.3f}, "
+        f"f1={f1_score(labels, preds, zero_division=0):.3f}"
+    )

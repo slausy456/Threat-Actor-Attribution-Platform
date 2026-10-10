@@ -39,6 +39,7 @@ def test_labels_agree_with_actor_table():
 
 def test_all_scenarios_present():
     expected = {"pgp_reuse", "wallet_reuse", "infra_only", "style_only", "multi_signal",
+                "pgp_restyled", "wallet_restyled", "infra_restyled",
                 "shared_hosting", "copycat_style", "similar_handle", "random"}
     assert set(by_scenario()) == expected
 
@@ -53,6 +54,9 @@ def test_every_persona_has_text_and_handle():
     ("pgp_reuse", (T.PGP_KEY,)),
     ("wallet_reuse", (T.WALLET,)),
     ("infra_only", (T.CERT_HASH, T.FAVICON_HASH)),
+    ("pgp_restyled", (T.PGP_KEY,)),
+    ("wallet_restyled", (T.WALLET,)),
+    ("infra_restyled", (T.CERT_HASH, T.FAVICON_HASH)),
 ])
 def test_single_signal_scenarios_share_that_signal(scenario, types):
     for pair in by_scenario()[scenario]:
@@ -92,3 +96,37 @@ def test_generation_is_deterministic(tmp_path):
     personas, _, pairs = gen.build()
     assert {p.persona_id for p in personas} == set(PERSONAS)
     assert len(pairs) == len(PAIRS)
+
+
+# ---- restyled scenarios: same actor, deliberately different writing style --------------
+
+RESTYLED = ["pgp_restyled", "wallet_restyled", "infra_restyled"]
+
+
+def _observable_style(persona):
+    """(is fully lowercase?, sentence-ending habit) - what a reader can see directly."""
+    texts = [t.text for t in persona.texts]
+    lower = all(t == t.lower() for t in texts)
+    ends = {t[-3:] if t.endswith("...") else (t[-1] if t[-1] in ".!" else "") for t in texts}
+    return lower, frozenset(ends)
+
+
+def test_restyled_pairs_really_changed_style():
+    """If this fails, 'restyled' pairs are not hard for stylometry and prove nothing."""
+    for scenario in RESTYLED:
+        pairs = by_scenario()[scenario]
+        assert len(pairs) == 3
+        for pair in pairs:
+            a, b = PERSONAS[pair.persona_a], PERSONAS[pair.persona_b]
+            assert _observable_style(a) != _observable_style(b), f"{scenario}: same visible style"
+
+
+def test_restyled_pairs_are_same_actor_with_exactly_their_signal():
+    for pair in by_scenario()["pgp_restyled"]:
+        assert not shared(pair, T.WALLET, T.CERT_HASH, T.FAVICON_HASH)
+    for pair in by_scenario()["wallet_restyled"]:
+        assert not shared(pair, T.PGP_KEY, T.CERT_HASH, T.FAVICON_HASH)
+    for pair in by_scenario()["infra_restyled"]:
+        assert not shared(pair, T.PGP_KEY, T.WALLET)
+    for scenario in RESTYLED:
+        assert all(p.same_actor for p in by_scenario()[scenario])
