@@ -19,6 +19,8 @@ decisions made in steps 3-5.
 - [x] **Step 2 — Pillar contract:** stub `matcher.py` in each pillar folder,
       `fusion/pipeline.py`, `tests/test_pillar_contract.py`, `scripts/evaluate_pillars.py`,
       `docs/pillar_contract.md`
+- [x] **Step 5 — Explanation layer:** deterministic grounded fallback, optional timed LLM,
+      evidence-validation tests
 - Check: `python -m pytest tests -q` -> `12 passed, 9 skipped`
 
 ---
