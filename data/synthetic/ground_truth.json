@@ -1,0 +1,519 @@
+{
+  "actors": [
+    {
+      "actor_id": "A001",
+      "persona_ids": [
+        "P001",
+        "P002"
+      ]
+    },
+    {
+      "actor_id": "A002",
+      "persona_ids": [
+        "P003",
+        "P004"
+      ]
+    },
+    {
+      "actor_id": "A003",
+      "persona_ids": [
+        "P005",
+        "P006"
+      ]
+    },
+    {
+      "actor_id": "A004",
+      "persona_ids": [
+        "P007",
+        "P008"
+      ]
+    },
+    {
+      "actor_id": "A005",
+      "persona_ids": [
+        "P009",
+        "P010"
+      ]
+    },
+    {
+      "actor_id": "A006",
+      "persona_ids": [
+        "P011",
+        "P012"
+      ]
+    },
+    {
+      "actor_id": "A007",
+      "persona_ids": [
+        "P013",
+        "P014"
+      ]
+    },
+    {
+      "actor_id": "A008",
+      "persona_ids": [
+        "P015",
+        "P016"
+      ]
+    },
+    {
+      "actor_id": "A009",
+      "persona_ids": [
+        "P017",
+        "P018"
+      ]
+    },
+    {
+      "actor_id": "A010",
+      "persona_ids": [
+        "P019",
+        "P020"
+      ]
+    },
+    {
+      "actor_id": "A011",
+      "persona_ids": [
+        "P021",
+        "P022"
+      ]
+    },
+    {
+      "actor_id": "A012",
+      "persona_ids": [
+        "P023",
+        "P024"
+      ]
+    },
+    {
+      "actor_id": "A013",
+      "persona_ids": [
+        "P025",
+        "P026"
+      ]
+    },
+    {
+      "actor_id": "A014",
+      "persona_ids": [
+        "P027",
+        "P028"
+      ]
+    },
+    {
+      "actor_id": "A015",
+      "persona_ids": [
+        "P029",
+        "P030"
+      ]
+    },
+    {
+      "actor_id": "A016",
+      "persona_ids": [
+        "P031"
+      ]
+    },
+    {
+      "actor_id": "A017",
+      "persona_ids": [
+        "P032"
+      ]
+    },
+    {
+      "actor_id": "A018",
+      "persona_ids": [
+        "P033"
+      ]
+    },
+    {
+      "actor_id": "A019",
+      "persona_ids": [
+        "P034"
+      ]
+    },
+    {
+      "actor_id": "A020",
+      "persona_ids": [
+        "P035"
+      ]
+    },
+    {
+      "actor_id": "A021",
+      "persona_ids": [
+        "P036"
+      ]
+    },
+    {
+      "actor_id": "A022",
+      "persona_ids": [
+        "P037"
+      ]
+    },
+    {
+      "actor_id": "A023",
+      "persona_ids": [
+        "P038"
+      ]
+    },
+    {
+      "actor_id": "A024",
+      "persona_ids": [
+        "P039"
+      ]
+    },
+    {
+      "actor_id": "A025",
+      "persona_ids": [
+        "P040"
+      ]
+    },
+    {
+      "actor_id": "A026",
+      "persona_ids": [
+        "P041"
+      ]
+    },
+    {
+      "actor_id": "A027",
+      "persona_ids": [
+        "P042"
+      ]
+    },
+    {
+      "actor_id": "A028",
+      "persona_ids": [
+        "P043"
+      ]
+    },
+    {
+      "actor_id": "A029",
+      "persona_ids": [
+        "P044"
+      ]
+    },
+    {
+      "actor_id": "A030",
+      "persona_ids": [
+        "P045"
+      ]
+    },
+    {
+      "actor_id": "A031",
+      "persona_ids": [
+        "P046"
+      ]
+    },
+    {
+      "actor_id": "A032",
+      "persona_ids": [
+        "P047"
+      ]
+    },
+    {
+      "actor_id": "A033",
+      "persona_ids": [
+        "P048"
+      ]
+    },
+    {
+      "actor_id": "A034",
+      "persona_ids": [
+        "P049"
+      ]
+    },
+    {
+      "actor_id": "A035",
+      "persona_ids": [
+        "P050"
+      ]
+    },
+    {
+      "actor_id": "A036",
+      "persona_ids": [
+        "P051"
+      ]
+    },
+    {
+      "actor_id": "A037",
+      "persona_ids": [
+        "P052"
+      ]
+    },
+    {
+      "actor_id": "A038",
+      "persona_ids": [
+        "P053"
+      ]
+    },
+    {
+      "actor_id": "A039",
+      "persona_ids": [
+        "P054"
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "persona_a": "P001",
+      "persona_b": "P002",
+      "same_actor": true,
+      "scenario": "pgp_reuse"
+    },
+    {
+      "persona_a": "P003",
+      "persona_b": "P004",
+      "same_actor": true,
+      "scenario": "pgp_reuse"
+    },
+    {
+      "persona_a": "P005",
+      "persona_b": "P006",
+      "same_actor": true,
+      "scenario": "pgp_reuse"
+    },
+    {
+      "persona_a": "P007",
+      "persona_b": "P008",
+      "same_actor": true,
+      "scenario": "wallet_reuse"
+    },
+    {
+      "persona_a": "P009",
+      "persona_b": "P010",
+      "same_actor": true,
+      "scenario": "wallet_reuse"
+    },
+    {
+      "persona_a": "P011",
+      "persona_b": "P012",
+      "same_actor": true,
+      "scenario": "wallet_reuse"
+    },
+    {
+      "persona_a": "P013",
+      "persona_b": "P014",
+      "same_actor": true,
+      "scenario": "infra_only"
+    },
+    {
+      "persona_a": "P015",
+      "persona_b": "P016",
+      "same_actor": true,
+      "scenario": "infra_only"
+    },
+    {
+      "persona_a": "P017",
+      "persona_b": "P018",
+      "same_actor": true,
+      "scenario": "infra_only"
+    },
+    {
+      "persona_a": "P019",
+      "persona_b": "P020",
+      "same_actor": true,
+      "scenario": "style_only"
+    },
+    {
+      "persona_a": "P021",
+      "persona_b": "P022",
+      "same_actor": true,
+      "scenario": "style_only"
+    },
+    {
+      "persona_a": "P023",
+      "persona_b": "P024",
+      "same_actor": true,
+      "scenario": "style_only"
+    },
+    {
+      "persona_a": "P025",
+      "persona_b": "P026",
+      "same_actor": true,
+      "scenario": "style_only"
+    },
+    {
+      "persona_a": "P027",
+      "persona_b": "P028",
+      "same_actor": true,
+      "scenario": "multi_signal"
+    },
+    {
+      "persona_a": "P029",
+      "persona_b": "P030",
+      "same_actor": true,
+      "scenario": "multi_signal"
+    },
+    {
+      "persona_a": "P031",
+      "persona_b": "P032",
+      "same_actor": false,
+      "scenario": "shared_hosting"
+    },
+    {
+      "persona_a": "P033",
+      "persona_b": "P034",
+      "same_actor": false,
+      "scenario": "shared_hosting"
+    },
+    {
+      "persona_a": "P035",
+      "persona_b": "P036",
+      "same_actor": false,
+      "scenario": "shared_hosting"
+    },
+    {
+      "persona_a": "P037",
+      "persona_b": "P038",
+      "same_actor": false,
+      "scenario": "copycat_style"
+    },
+    {
+      "persona_a": "P039",
+      "persona_b": "P040",
+      "same_actor": false,
+      "scenario": "copycat_style"
+    },
+    {
+      "persona_a": "P041",
+      "persona_b": "P042",
+      "same_actor": false,
+      "scenario": "copycat_style"
+    },
+    {
+      "persona_a": "P043",
+      "persona_b": "P044",
+      "same_actor": false,
+      "scenario": "similar_handle"
+    },
+    {
+      "persona_a": "P045",
+      "persona_b": "P046",
+      "same_actor": false,
+      "scenario": "similar_handle"
+    },
+    {
+      "persona_a": "P047",
+      "persona_b": "P048",
+      "same_actor": false,
+      "scenario": "similar_handle"
+    },
+    {
+      "persona_a": "P005",
+      "persona_b": "P051",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P035",
+      "persona_b": "P042",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P020",
+      "persona_b": "P032",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P035",
+      "persona_b": "P054",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P052",
+      "persona_b": "P029",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P002",
+      "persona_b": "P003",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P022",
+      "persona_b": "P004",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P022",
+      "persona_b": "P051",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P047",
+      "persona_b": "P003",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P026",
+      "persona_b": "P008",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P014",
+      "persona_b": "P052",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P042",
+      "persona_b": "P043",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P034",
+      "persona_b": "P030",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P044",
+      "persona_b": "P035",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P010",
+      "persona_b": "P048",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P038",
+      "persona_b": "P015",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P005",
+      "persona_b": "P003",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P032",
+      "persona_b": "P042",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P002",
+      "persona_b": "P031",
+      "same_actor": false,
+      "scenario": "random"
+    },
+    {
+      "persona_a": "P040",
+      "persona_b": "P003",
+      "same_actor": false,
+      "scenario": "random"
+    }
+  ]
+}

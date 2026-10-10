@@ -97,11 +97,12 @@ streamlit run app.py
 Or just run `bash scripts/setup.sh` to bootstrap both virtual environments at once.
 
 ## Running tests
+From the repo root:
 ```bash
-cd backend && source .venv/bin/activate
-pytest ../tests
+pip install -r backend/requirements.txt
+python scripts/generate_synthetic_data.py   # only needed if data/synthetic is missing
+python -m pytest tests -q
 ```
-(Test suite is a placeholder — add tests alongside each service module as it's built.)
 
 ## Data
 See `data/README.md` before adding anything to `data/`. Only legal, published
