@@ -6,6 +6,7 @@ import os
 import re
 
 import httpx
+from app.services.fusion.scorer import tier
 
 PILLAR_NAMES = {
     "identity_graph": "identity graph",
@@ -48,7 +49,6 @@ def _score(value) -> float:
 
 def _template(result: dict) -> str:
     confidence = _score(result.get("confidence"))
-    level = "low" if confidence < 0.35 else "moderate" if confidence < 0.7 else "high"
     breakdown = result.get("breakdown", {})
     if not isinstance(breakdown, dict):
         breakdown = {}
@@ -59,9 +59,7 @@ def _template(result: dict) -> str:
     lead_name = PILLAR_NAMES[lead]
     lead_evidence = evidence.get(lead, [])
 
-    sentences = [
-        f"Overall confidence is {level} ({confidence:.2f}), so this is a tentative assessment rather than a calibrated probability."
-    ]
+    sentences = []
     if scores[lead] >= 0.4 and lead_evidence:
         quoted = "; ".join(f'“{item[:180]}”' for item in lead_evidence[:2])
         sentences.append(
@@ -91,7 +89,7 @@ def _identifiers(text: str) -> set[str]:
 
 def _valid_llm_text(text: str, evidence: dict[str, list[str]]) -> bool:
     sentences = [part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part]
-    if not 20 <= len(text) <= 1200 or not 2 <= len(sentences) <= 4:
+    if not 20 <= len(text) <= 1000 or not 2 <= len(sentences) <= 3:
         return False
     if not UNCERTAINTY_TERMS.search(text):
         return False
@@ -148,4 +146,10 @@ def explain(result: dict) -> str:
     if not isinstance(result, dict):
         result = {}
     evidence = _evidence_map(result)
-    return _llm_explanation(result, evidence) or _template(result)
+    confidence = _score(result.get("confidence"))
+    tier_sentence = (
+        f"Tier: {tier(confidence)} lead (confidence {confidence:.2f}); "
+        "this remains tentative and the evidence is not conclusive."
+    )
+    explanation = _llm_explanation(result, evidence) or _template(result)
+    return f"{tier_sentence} {explanation}"

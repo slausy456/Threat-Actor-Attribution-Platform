@@ -29,6 +29,7 @@ class CompareRequest(BaseModel):
 
 class ComparisonResponse(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
+    tier: Literal["strong", "moderate", "weak"]
     breakdown: dict[str, float]
     weights_used: dict[str, float]
     evidence: dict[str, list[str]]

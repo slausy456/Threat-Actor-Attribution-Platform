@@ -88,7 +88,9 @@ def test_configured_llm_uses_ten_second_timeout(monkeypatch):
         return Response()
 
     monkeypatch.setattr(explainer.httpx, "post", fake_post)
-    assert explain(_example_result()) == response_text
+    explanation = explain(_example_result())
+    assert response_text in explanation
+    assert explanation.startswith("Tier: weak lead")
     assert calls["timeout"] == 10.0
 
 

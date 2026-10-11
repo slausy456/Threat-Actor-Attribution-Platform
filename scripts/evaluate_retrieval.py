@@ -15,11 +15,48 @@ from app.data_loader import load_ground_truth, load_personas  # noqa: E402
 from app.services.fusion.pipeline import score_pair  # noqa: E402
 
 DECISION_THRESHOLD = 0.5
+FUSED_THRESHOLDS = (0.5, 0.7, 0.8, 0.9)
+PILLAR_CORROBORATION_THRESHOLD = 0.30
+
+
+def classification_metrics(scored_pairs, actor_by_persona, threshold, corroborated=False):
+    true_positives = 0
+    false_positives = 0
+    false_negatives = 0
+
+    for (persona_id_a, persona_id_b), result in scored_pairs.items():
+        is_twin = actor_by_persona[persona_id_a] == actor_by_persona[persona_id_b]
+        pillar_matches = sum(
+            score >= PILLAR_CORROBORATION_THRESHOLD
+            for score in result["breakdown"].values()
+        )
+        predicted_match = result["confidence"] >= threshold and (
+            not corroborated or pillar_matches >= 2
+        )
+        if predicted_match and is_twin:
+            true_positives += 1
+        elif predicted_match:
+            false_positives += 1
+        elif is_twin:
+            false_negatives += 1
+
+    precision = (
+        true_positives / (true_positives + false_positives)
+        if true_positives + false_positives
+        else 0.0
+    )
+    recall = (
+        true_positives / (true_positives + false_negatives)
+        if true_positives + false_negatives
+        else 0.0
+    )
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    return precision, recall, f1, false_positives
 
 
 def main() -> None:
     personas = load_personas()
-    actors, _ = load_ground_truth()
+    actors, labeled_pairs = load_ground_truth()
     actor_by_persona = {
         persona_id: actor.actor_id
         for actor in actors
@@ -78,6 +115,11 @@ def main() -> None:
     predicted_positive_pairs = positive_predictions + len(false_positives)
     precision = positive_predictions / predicted_positive_pairs if predicted_positive_pairs else 0.0
     mean_reciprocal_rank = sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
+    scenario_by_pair = {
+        tuple(sorted((pair.persona_a, pair.persona_b))): pair.scenario
+        for pair in labeled_pairs
+        if pair.same_actor
+    }
 
     print(f"Personas: {len(personas)}")
     print(f"Unique persona pairs scored: {len(scored_pairs)}")
@@ -87,6 +129,55 @@ def main() -> None:
     print(f"Mean reciprocal rank: {mean_reciprocal_rank:.3f}")
     print(f"Non-twin pairs scoring >= {DECISION_THRESHOLD:.1f}: {len(false_positives)}")
     print(f"Precision at {DECISION_THRESHOLD:.1f}: {precision:.3f}")
+    print()
+
+    print("All-pair classification metrics by fused threshold")
+    print(f"{'threshold':>10}{'precision':>12}{'recall':>10}{'F1':>10}{'false positives':>18}")
+    for threshold in FUSED_THRESHOLDS:
+        precision, recall, f1, false_positive_count = classification_metrics(
+            scored_pairs, actor_by_persona, threshold
+        )
+        print(
+            f"{threshold:>10.1f}{precision:>12.3f}{recall:>10.3f}"
+            f"{f1:>10.3f}{false_positive_count:>18}"
+        )
+
+    print()
+    print(
+        "All-pair classification metrics with corroboration "
+        f"(at least 2 pillars >= {PILLAR_CORROBORATION_THRESHOLD:.2f})"
+    )
+    print(f"{'threshold':>10}{'precision':>12}{'recall':>10}{'F1':>10}{'false positives':>18}")
+    for threshold in FUSED_THRESHOLDS:
+        precision, recall, f1, false_positive_count = classification_metrics(
+            scored_pairs, actor_by_persona, threshold, corroborated=True
+        )
+        print(
+            f"{threshold:>10.1f}{precision:>12.3f}{recall:>10.3f}"
+            f"{f1:>10.3f}{false_positive_count:>18}"
+        )
+
+    print()
+    print("True twin pairs lost by the corroborated rule")
+    for threshold in FUSED_THRESHOLDS:
+        lost = []
+        for (persona_id_a, persona_id_b), result in scored_pairs.items():
+            if actor_by_persona[persona_id_a] != actor_by_persona[persona_id_b]:
+                continue
+            pillar_matches = sum(
+                score >= PILLAR_CORROBORATION_THRESHOLD
+                for score in result["breakdown"].values()
+            )
+            if result["confidence"] < threshold or pillar_matches < 2:
+                pair = (persona_id_a, persona_id_b)
+                lost.append((pair, scenario_by_pair.get(pair, "unknown")))
+        lost.sort()
+        pairs_text = ", ".join(
+            f"{persona_id_a}-{persona_id_b} ({scenario})"
+            for (persona_id_a, persona_id_b), scenario in lost
+        ) or "none"
+        print(f"threshold {threshold:.1f}: {pairs_text}")
+
     print()
     print("10 highest-scoring false-positive pairs (non-twins, score >= 0.5)")
     print(f"{'pair':<17}{'confidence':>12}{'identity':>12}{'infrastructure':>17}{'stylometry':>13}")

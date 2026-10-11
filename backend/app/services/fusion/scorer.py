@@ -26,6 +26,21 @@ DEFAULT_WEIGHTS = {
     "stylometry": 0.30,
 }
 
+# These cutoffs come from scripts/evaluate_retrieval.py on the synthetic dataset:
+# the strong tier had 0 false positives among 2,556 pairs; tuned on this data,
+# this result is not proven to generalise.
+STRONG_TIER_THRESHOLD = 0.90
+MODERATE_TIER_THRESHOLD = 0.70
+
+
+def tier(confidence: float) -> str:
+    """Map a confidence score to a descriptive tier without changing the score."""
+    if confidence >= STRONG_TIER_THRESHOLD:
+        return "strong"
+    if confidence >= MODERATE_TIER_THRESHOLD:
+        return "moderate"
+    return "weak"
+
 
 def _load_model_weights() -> dict | None:
     path = Path(__file__).resolve().with_name("weights.json")
@@ -81,6 +96,7 @@ def fuse(scores: SignalScores, weights: dict = None) -> dict:
         weights_used = w.copy()
     return {
         "confidence": round(final, 3),
+        "tier": tier(round(final, 3)),
         "breakdown": {
             "infrastructure": scores.infrastructure,
             "identity_graph": scores.identity_graph,

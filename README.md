@@ -82,6 +82,18 @@ The API is available at `http://127.0.0.1:8000`; interactive documentation is at
 
 Available endpoints: `GET /health`, `GET /personas`, `GET /personas/{id}`, `POST /compare`, `GET /personas/{id}/candidates`, and `GET /export?format=csv|json|report`. The `since` and `until` filters select personas whose observed date range overlaps the requested interval.
 
+### Confidence tiers
+
+API comparison and candidate results include an additive tier; the underlying confidence score is unchanged.
+
+| Tier | Fused confidence |
+|---|---:|
+| Strong | >= 0.90 |
+| Moderate | >= 0.70 and < 0.90 |
+| Weak | < 0.70 |
+
+These cutoffs were assessed on the synthetic dataset and are not proven to generalise. See [docs/confidence_tiers.md](docs/confidence_tiers.md) for the evaluation caveat.
+
 ## Running tests
 From the repo root:
 ```bash
