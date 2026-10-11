@@ -12,6 +12,7 @@ from dashboard.client import (
     build_candidate_graph,
     candidate_export_payload,
     compare_personas,
+    connection_status,
     filter_personas_by_timeline,
     format_confidence,
     get_candidates,
@@ -88,8 +89,10 @@ try:
     api_url = api_base_url()
     with st.sidebar:
         st.subheader("Workspace")
-        st.caption(f"API · {api_url}")
         all_personas = list_personas(api_url=api_url)
+        st.caption(connection_status())
+        if api_url:
+            st.caption(f"API · {api_url}")
         first_dates = [date.fromisoformat(item["first_seen"][:10]) for item in all_personas]
         last_dates = [date.fromisoformat(item["last_seen"][:10]) for item in all_personas]
         date_window = st.date_input(

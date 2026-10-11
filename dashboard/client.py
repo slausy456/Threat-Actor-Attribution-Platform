@@ -5,7 +5,10 @@ import csv
 import io
 import json
 import os
+import sys
 from datetime import date, datetime, time
+from functools import lru_cache
+from pathlib import Path
 from urllib.parse import urlparse
 
 import networkx as nx
@@ -14,6 +17,9 @@ import requests
 
 DEFAULT_API_URL = "http://127.0.0.1:8000"
 ALLOWED_API_HOSTS = {"127.0.0.1", "localhost", "::1"}
+DEMO_MODE_LABEL = "Demo mode: synthetic data, in-process scoring"
+CONNECTED_MODE_LABEL = "Connected to API"
+_CONNECTION_MODE = DEMO_MODE_LABEL
 TIER_COLORS = {"strong": "#12623a", "moderate": "#795000", "weak": "#555555"}
 TIER_TEXT_COLOR = "#ffffff"
 SIGNAL_LABELS = {
@@ -51,14 +57,46 @@ def timeline_filter_bounds(selection) -> tuple[datetime | None, datetime | None]
     return since, until
 
 
-def api_base_url(value: str | None = None) -> str:
-    base = (value or os.getenv("ATTRIBUTION_API_URL") or DEFAULT_API_URL).rstrip("/")
+def _streamlit_secret_api_url() -> str | None:
+    try:
+        import streamlit as st
+
+        return st.secrets.get("ATTRIBUTION_API_URL")
+    except Exception:
+        return None
+
+
+def api_base_url(value: str | None = None) -> str | None:
+    configured = value if value is not None else (
+        os.getenv("ATTRIBUTION_API_URL", "").strip() or _streamlit_secret_api_url()
+    )
+    if not configured:
+        return None
+    base = configured.rstrip("/")
     parsed = urlparse(base)
     if parsed.scheme != "http" or parsed.hostname not in ALLOWED_API_HOSTS:
         raise ValueError("ATTRIBUTION_API_URL must point to a local HTTP API host")
     if parsed.username or parsed.password or parsed.query or parsed.fragment:
         raise ValueError("ATTRIBUTION_API_URL must be a plain local base URL")
     return base
+
+
+def connection_status() -> str:
+    return _CONNECTION_MODE
+
+
+@lru_cache(maxsize=1)
+def _demo_store():
+    backend_path = str(Path(__file__).resolve().parents[1] / "backend")
+    if backend_path not in sys.path:
+        sys.path.insert(0, backend_path)
+    from app.services.storage.graph_store import GraphStore
+
+    return GraphStore()
+
+
+def _persona_dict(persona) -> dict:
+    return persona.model_dump(mode="json")
 
 
 def _date_value(value: date | datetime | str | None, end_of_day: bool = False) -> str | None:
@@ -83,14 +121,33 @@ def _timeline_params(since=None, until=None) -> dict[str, str]:
     return params
 
 
+def _store_datetime(value, end_of_day: bool = False):
+    if isinstance(value, str):
+        return datetime.fromisoformat(value)
+    if isinstance(value, date) and not isinstance(value, datetime):
+        boundary = time.max if end_of_day else time.min
+        return datetime.combine(value, boundary)
+    return value
+
+
 def _request(method: str, path: str, api_url: str | None = None, **kwargs):
-    url = f"{api_base_url(api_url)}{path}"
+    global _CONNECTION_MODE
     try:
-        response = requests.request(method, url, timeout=8, **kwargs)
+        base = api_base_url(api_url)
+    except ValueError:
+        _CONNECTION_MODE = DEMO_MODE_LABEL
+        return None
+    if base is None:
+        _CONNECTION_MODE = DEMO_MODE_LABEL
+        return None
+    try:
+        response = requests.request(method, f"{base}{path}", timeout=8, **kwargs)
         response.raise_for_status()
+        _CONNECTION_MODE = CONNECTED_MODE_LABEL
         return response
-    except requests.RequestException as error:
-        raise ApiError(f"Local API request failed: {error}") from error
+    except requests.RequestException:
+        _CONNECTION_MODE = DEMO_MODE_LABEL
+        return None
 
 
 def list_personas(since=None, until=None, api_url: str | None = None) -> list[dict]:
@@ -100,11 +157,24 @@ def list_personas(since=None, until=None, api_url: str | None = None) -> list[di
         api_url,
         params=_timeline_params(since, until),
     )
-    return response.json()
+    if response is not None:
+        return response.json()
+    return [
+        _persona_dict(persona)
+        for persona in _demo_store().list_personas(
+            _store_datetime(since), _store_datetime(until, end_of_day=True)
+        )
+    ]
 
 
 def get_persona(persona_id: str, api_url: str | None = None) -> dict:
-    return _request("GET", f"/personas/{persona_id}", api_url).json()
+    response = _request("GET", f"/personas/{persona_id}", api_url)
+    if response is not None:
+        return response.json()
+    persona = _demo_store().get_persona(persona_id)
+    if persona is None:
+        raise ApiError(f"Persona not found: {persona_id}")
+    return _persona_dict(persona)
 
 
 def get_candidates(
@@ -115,16 +185,31 @@ def get_candidates(
     api_url: str | None = None,
 ) -> list[dict]:
     params = {"top": top, **_timeline_params(since, until)}
-    return _request(
+    response = _request(
         "GET",
         f"/personas/{persona_id}/candidates",
         api_url,
         params=params,
-    ).json()
+    )
+    if response is not None:
+        return response.json()
+    rows = _demo_store().candidates(
+        persona_id,
+        top=top,
+        since=_store_datetime(since),
+        until=_store_datetime(until, end_of_day=True),
+    )
+    return [{**row, "persona": _persona_dict(row["persona"])} for row in rows]
 
 
 def compare_personas(a: str, b: str, api_url: str | None = None) -> dict:
-    return _request("POST", "/compare", api_url, json={"a": a, "b": b}).json()
+    response = _request("POST", "/compare", api_url, json={"a": a, "b": b})
+    if response is not None:
+        return response.json()
+    try:
+        return _demo_store().compare(a, b)
+    except KeyError as error:
+        raise ApiError(f"Persona not found: {error.args[0]}") from error
 
 
 def search_personas(query: str, personas: list[dict]) -> list[dict]:
@@ -301,12 +386,21 @@ def candidate_export_payload(
 ) -> tuple[str, str]:
     if output_format not in {"csv", "json"}:
         raise ValueError("output_format must be csv or json")
-    export_data = _request(
+    response = _request(
         "GET",
         "/export",
         api_url,
         params={"format": "json", **_timeline_params(since, until)},
-    ).json()
+    )
+    if response is None:
+        export_data = {
+            "rows": _demo_store().export_rows(
+                since=_store_datetime(since),
+                until=_store_datetime(until, end_of_day=True),
+            )
+        }
+    else:
+        export_data = response.json()
     exported_by_id = {row["persona_id"]: row for row in export_data.get("rows", [])}
     rows = []
     for candidate in candidates:

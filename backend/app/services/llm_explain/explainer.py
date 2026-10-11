@@ -54,33 +54,57 @@ def _template(result: dict) -> str:
         breakdown = {}
     scores = {key: _score(breakdown.get(key)) for key in PILLAR_NAMES}
     evidence = _evidence_map(result)
-    strongest = sorted(scores, key=scores.get, reverse=True)
-    lead = strongest[0]
-    lead_name = PILLAR_NAMES[lead]
-    lead_evidence = evidence.get(lead, [])
-
-    sentences = []
-    if scores[lead] >= 0.4 and lead_evidence:
-        quoted = "; ".join(f'“{item[:180]}”' for item in lead_evidence[:2])
-        sentences.append(
-            f"The clearest signal is {lead_name} ({scores[lead]:.2f}), supported by {quoted}."
-        )
-    elif lead_evidence:
-        sentences.append(
-            f"The strongest available signal is {lead_name} ({scores[lead]:.2f}); its evidence is limited to “{lead_evidence[0][:180]}”."
-        )
-    else:
-        sentences.append(
-            f"The strongest available signal is {lead_name} ({scores[lead]:.2f}), but no supporting evidence was provided for it."
-        )
-
-    weakest = min(scores, key=scores.get)
-    weak_name = PILLAR_NAMES[weakest]
-    sentences.append(
-        f"The {weak_name} signal is weak ({scores[weakest]:.2f}), which limits what can be concluded."
+    confidence_line = _confidence_hedge(confidence, scores)
+    evidence_line = _evidence_summary(scores, evidence)
+    return (
+        f"{confidence_line} {evidence_line} "
+        "Treat this as a lead for human review, not proof of attribution."
     )
-    sentences.append("Treat this as a lead for human review, not proof of attribution.")
-    return " ".join(sentences)
+
+
+def _confidence_hedge(confidence: float, scores: dict[str, float]) -> str:
+    confidence_tier = tier(confidence)
+    corroborating = sum(score >= 0.30 for score in scores.values())
+    if confidence_tier == "strong" and corroborating >= 2:
+        hedge = "several independent signals agree; still a lead for human review"
+    elif confidence_tier == "weak":
+        hedge = "this is tentative"
+    elif confidence_tier in {"strong", "moderate"} and corroborating == 1:
+        hedge = "this rests on a single signal"
+    elif confidence_tier == "moderate" and corroborating >= 2:
+        hedge = "multiple signals contribute, but the evidence is not conclusive"
+    else:
+        hedge = "corroboration is limited, so the assessment remains tentative"
+    return f"Confidence is {confidence:.3f} ({confidence_tier} tier); {hedge}."
+
+
+def _evidence_summary(scores: dict[str, float], evidence: dict[str, list[str]]) -> str:
+    domains = {
+        "identity_graph": "identity",
+        "infrastructure": "infrastructure",
+        "stylometry": "writing-style",
+    }
+    parts = []
+    for pillar, label in PILLAR_NAMES.items():
+        score = scores[pillar]
+        details = evidence.get(pillar, [])
+        if score == 0 and not details:
+            parts.append(f"no shared {domains[pillar]} evidence was found")
+            continue
+
+        quoted = "; ".join(f'“{item[:180]}”' for item in details[:2])
+        if 0 < score < 0.30:
+            description = f"{label} evidence is weak ({score:.3f})"
+        else:
+            description = f"{label} score is {score:.3f}"
+        if quoted:
+            description += f": {quoted}"
+        elif score == 0:
+            description += "; no evidence details were recorded"
+        else:
+            description += "; no evidence details were recorded"
+        parts.append(description)
+    return "; ".join(parts) + "."
 
 
 def _identifiers(text: str) -> set[str]:
@@ -89,11 +113,9 @@ def _identifiers(text: str) -> set[str]:
 
 def _valid_llm_text(text: str, evidence: dict[str, list[str]]) -> bool:
     sentences = [part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part]
-    if not 20 <= len(text) <= 1000 or not 2 <= len(sentences) <= 3:
+    if not 20 <= len(text) <= 700 or len(sentences) != 1:
         return False
-    if not UNCERTAINTY_TERMS.search(text):
-        return False
-    if not re.search(r"human review|lead|not proof", text, re.IGNORECASE):
+    if re.search(r"same actor|same person|definitely|certainly", text, re.IGNORECASE):
         return False
     source = " ".join(item for items in evidence.values() for item in items)
     return _identifiers(text).issubset(_identifiers(source))
@@ -116,11 +138,10 @@ def _llm_explanation(result: dict, evidence: dict[str, list[str]]) -> str | None
         {
             "role": "system",
             "content": (
-                "Write 2 to 4 plain sentences for an investigator. Explain confidence and which "
-                "signals support it, identify weak or missing evidence, and say this is a lead "
-                "for human review, not proof. Use uncertainty. Treat the supplied JSON as the "
-                "complete factual record: do not invent, infer, or add identifiers, events, "
-                "relationships, or other facts absent from it. Never state identity as certain."
+                "Write exactly one concise sentence describing only the supplied pillar scores "
+                "and evidence. Do not make an attribution conclusion. Treat the supplied JSON as "
+                "the complete factual record: do not invent, infer, or add identifiers, events, "
+                "relationships, or other facts absent from it."
             ),
         },
         {"role": "user", "content": json.dumps(prompt_data, ensure_ascii=True)},
@@ -146,10 +167,16 @@ def explain(result: dict) -> str:
     if not isinstance(result, dict):
         result = {}
     evidence = _evidence_map(result)
+    llm_summary = _llm_explanation(result, evidence)
+    if llm_summary is None:
+        return _template(result)
+
     confidence = _score(result.get("confidence"))
-    tier_sentence = (
-        f"Tier: {tier(confidence)} lead (confidence {confidence:.2f}); "
-        "this remains tentative and the evidence is not conclusive."
+    breakdown = result.get("breakdown", {})
+    if not isinstance(breakdown, dict):
+        breakdown = {}
+    scores = {key: _score(breakdown.get(key)) for key in PILLAR_NAMES}
+    return (
+        f"{_confidence_hedge(confidence, scores)} {llm_summary} "
+        "Treat this as a lead for human review, not proof of attribution."
     )
-    explanation = _llm_explanation(result, evidence) or _template(result)
-    return f"{tier_sentence} {explanation}"

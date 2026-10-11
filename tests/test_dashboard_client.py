@@ -50,6 +50,7 @@ def test_api_url_is_configurable_but_loopback_only(monkeypatch):
 
 
 def test_list_personas_and_candidates_shape_timeline_params(monkeypatch):
+    monkeypatch.setenv("ATTRIBUTION_API_URL", "http://127.0.0.1:8000")
     calls = []
 
     def fake_request(method, url, timeout, **kwargs):
@@ -93,6 +94,7 @@ def test_linked_personas_returns_exact_shared_identifiers():
 
 
 def test_compare_uses_local_api_and_json_body(monkeypatch):
+    monkeypatch.setenv("ATTRIBUTION_API_URL", "http://127.0.0.1:8000")
     calls = []
 
     def fake_request(method, url, timeout, **kwargs):
@@ -115,6 +117,7 @@ def test_candidate_graph_labels_edges_and_tiers():
 
 
 def test_candidate_export_uses_api_export_and_contains_shown_matches(monkeypatch):
+    monkeypatch.setenv("ATTRIBUTION_API_URL", "http://127.0.0.1:8000")
     calls = []
     export_payload = {
         "rows": [
@@ -148,3 +151,39 @@ def test_candidate_export_uses_api_export_and_contains_shown_matches(monkeypatch
     assert len(exported) == 1
     assert exported[0]["persona_id"] == "P002"
     assert exported[0]["confidence"] == 0.92
+
+
+def test_demo_candidates_and_tiers_match_api_path_for_p001(monkeypatch):
+    monkeypatch.delenv("ATTRIBUTION_API_URL", raising=False)
+    demo_candidates = client.get_candidates("P001", top=5)
+    assert client.connection_status() == client.DEMO_MODE_LABEL
+
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from urllib.parse import urlparse
+
+    api_client = TestClient(app)
+
+    def api_request(method, url, timeout, **kwargs):
+        kwargs.pop("timeout", None)
+        return api_client.request(method, urlparse(url).path, **kwargs)
+
+    monkeypatch.setattr(client.requests, "request", api_request)
+    monkeypatch.setenv("ATTRIBUTION_API_URL", "http://127.0.0.1:8000")
+    api_candidates = client.get_candidates("P001", top=5)
+
+    assert client.connection_status() == client.CONNECTED_MODE_LABEL
+    assert demo_candidates == api_candidates
+    assert [item["tier"] for item in demo_candidates] == [item["tier"] for item in api_candidates]
+
+
+def test_unreachable_api_falls_back_to_demo(monkeypatch):
+    monkeypatch.setenv("ATTRIBUTION_API_URL", "http://127.0.0.1:8000")
+
+    def unavailable(*args, **kwargs):
+        raise client.requests.ConnectionError("offline")
+
+    monkeypatch.setattr(client.requests, "request", unavailable)
+    candidates = client.get_candidates("P001", top=2)
+    assert len(candidates) == 2
+    assert client.connection_status() == client.DEMO_MODE_LABEL

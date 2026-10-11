@@ -82,15 +82,28 @@ The API is available at `http://127.0.0.1:8000`; interactive documentation is at
 
 ### Dashboard
 
-In a separate terminal from the repository root, install the dashboard dependencies and start Streamlit:
+The dashboard runs standalone with the bundled synthetic dataset and in-process
+scoring; a separate API server is optional. From the repository root:
 
 ```powershell
-python -m pip install -r dashboard/requirements.txt
-$env:ATTRIBUTION_API_URL = "http://127.0.0.1:8000"
+python -m pip install -r requirements.txt
 python -m streamlit run dashboard/app.py
 ```
 
-The dashboard client only accepts loopback API hosts (`127.0.0.1`, `localhost`, or `::1`). The date-range control filters by the persona's `first_seen` and `last_seen` fields.
+When `ATTRIBUTION_API_URL` is unset, the sidebar identifies in-process demo
+mode. To connect to the optional local API, set `ATTRIBUTION_API_URL` to its
+loopback URL (for example, `http://127.0.0.1:8000`). Streamlit Community Cloud
+can set the same key in App settings under Secrets; no API URL is needed for
+standalone deployment. Requests use the API when reachable and fall back to
+in-process scoring when it is unavailable. No model download or GPU is required.
+
+For Streamlit Community Cloud, deploy this repository with `dashboard/app.py`
+as the Main file path. Community Cloud installs runtime dependencies from the
+root `requirements.txt`; leave `ATTRIBUTION_API_URL` unset to use standalone
+demo mode. The dashboard only uses the bundled synthetic dataset in that mode.
+
+The date-range control filters by the persona's `first_seen` and `last_seen`
+fields.
 
 Available endpoints: `GET /health`, `GET /personas`, `GET /personas/{id}`, `POST /compare`, `GET /personas/{id}/candidates`, and `GET /export?format=csv|json|report`. The `since` and `until` filters select personas whose observed date range overlaps the requested interval.
 

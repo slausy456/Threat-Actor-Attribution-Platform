@@ -51,6 +51,65 @@ def test_explain_uses_uncertainty_and_human_review_language(monkeypatch):
     result = explain(_example_result())
     assert re.search(r"uncertain|tentative|possible|limited|confidence", result, re.I)
     assert re.search(r"lead for human review|not proof", result, re.I)
+    assert result.endswith("Treat this as a lead for human review, not proof of attribution.")
+
+
+def test_zero_score_without_evidence_is_reported_as_missing_not_weak(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    result = explain(
+        {
+            "confidence": 0.2,
+            "breakdown": {"identity_graph": 0.0, "infrastructure": 0.0, "stylometry": 0.0},
+            "evidence": {"identity_graph": [], "infrastructure": [], "stylometry": []},
+        }
+    )
+    assert "no shared identity evidence was found" in result
+    assert "no shared infrastructure evidence was found" in result
+    assert "no shared writing-style evidence was found" in result
+    assert "evidence is weak (0.000)" not in result
+
+
+def test_signal_is_called_weak_only_for_nonzero_score_below_point_three(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    result = explain(
+        {
+            "confidence": 0.3,
+            "breakdown": {"identity_graph": 0.0, "infrastructure": 0.299, "stylometry": 0.30},
+            "evidence": {
+                "identity_graph": [],
+                "infrastructure": ["shared common banner nginx/1.18"],
+                "stylometry": ["style similarity 0.30"],
+            },
+        }
+    )
+    assert "infrastructure evidence is weak (0.299)" in result
+    assert "identity evidence is weak" not in result
+    assert "writing style evidence is weak" not in result
+
+
+def test_tier_hedge_uses_corroboration_and_three_decimal_confidence(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    strong = explain(
+        {
+            "confidence": 0.9,
+            "breakdown": {"identity_graph": 0.3, "infrastructure": 0.30, "stylometry": 0.0},
+            "evidence": {},
+        }
+    )
+    assert "Confidence is 0.900 (strong tier)" in strong
+    assert "several independent signals agree; still a lead for human review" in strong
+
+    moderate = explain(
+        {
+            "confidence": 0.7,
+            "breakdown": {"identity_graph": 0.30, "infrastructure": 0.0, "stylometry": 0.0},
+            "evidence": {},
+        }
+    )
+    assert "Confidence is 0.700 (moderate tier); this rests on a single signal." in moderate
+
+    weak = explain({"confidence": 0.699, "breakdown": {}, "evidence": {}})
+    assert "Confidence is 0.699 (weak tier); this is tentative." in weak
 
 
 def test_low_confidence_explanation_does_not_assert_same_actor(monkeypatch):
@@ -70,10 +129,7 @@ def test_configured_llm_uses_ten_second_timeout(monkeypatch):
 
     monkeypatch.setenv("LLM_API_KEY", "test-key")
     monkeypatch.setenv("LLM_PROVIDER", "groq")
-    response_text = (
-        "Confidence is moderate and remains tentative. The evidence supports a limited assessment. "
-        "Treat this as a lead for human review, not proof."
-    )
+    response_text = "The available evidence supports a limited identity-graph signal."
     calls = {}
 
     class Response:
@@ -90,7 +146,8 @@ def test_configured_llm_uses_ten_second_timeout(monkeypatch):
     monkeypatch.setattr(explainer.httpx, "post", fake_post)
     explanation = explain(_example_result())
     assert response_text in explanation
-    assert explanation.startswith("Tier: weak lead")
+    assert explanation.startswith("Confidence is 0.200 (weak tier)")
+    assert explanation.endswith("Treat this as a lead for human review, not proof of attribution.")
     assert calls["timeout"] == 10.0
 
 
