@@ -1,0 +1,1 @@
+"""In-memory storage adapters for prototype data."""

@@ -21,6 +21,8 @@ decisions made in steps 3-5.
       `docs/pillar_contract.md`
 - [x] **Step 5 — Explanation layer:** deterministic grounded fallback, optional timed LLM,
       evidence-validation tests
+- [x] **Step 6 — Storage:** in-memory NetworkX persona/identifier graph and cached comparisons
+- [x] **Step 7 — API:** FastAPI persona, compare, candidate, and CSV/JSON/Markdown export routes
 - Check: `python -m pytest tests -q` -> `12 passed, 9 skipped`
 
 ---

@@ -1,10 +1,8 @@
-"""
-Threat Actor Attribution Platform — FastAPI backend entrypoint.
-
-Wires together the four evidence pillars (infrastructure_scan, identity_graph,
-stylometry, fusion) behind a single API. See docs/architecture.md.
-"""
+"""FastAPI entrypoint for the in-memory research-data prototype."""
 from fastapi import FastAPI
+
+from app.routers.api import router
+from app.services.storage.graph_store import GraphStore
 
 app = FastAPI(
     title="Threat Actor Attribution Platform",
@@ -15,15 +13,5 @@ app = FastAPI(
     ),
     version="0.1.0",
 )
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
-
-# Routers are registered here as each pillar's endpoints are implemented.
-# from app.routers import actors, identifiers, matches
-# app.include_router(actors.router)
-# app.include_router(identifiers.router)
-# app.include_router(matches.router)
+app.state.store = GraphStore()
+app.include_router(router)

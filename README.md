@@ -42,10 +42,11 @@ See `docs/literature_gap_analysis.md` for the full breakdown.
 ```
 backend/        FastAPI service: ingestion, graph building, fusion scoring, API
   app/services/infrastructure_scan/   wraps OnionScan-style output (dataset-based)
-  app/services/identity_graph/        PGP/handle/wallet correlation, Neo4j
+   app/services/identity_graph/        PGP/handle/wallet correlation
   app/services/stylometry/            sentence-transformers embedding similarity
   app/services/fusion/                combines signals into one confidence score
   app/services/llm_explain/           generates plain-language reasoning per match
+   app/services/storage/               in-memory NetworkX persona/identifier graph
 dashboard/      Streamlit UI: search, actor profile, graph view, export
 data/           raw/processed/veridark — see data/README.md before adding anything
 docker/         docker-compose for Neo4j + Postgres + backend + dashboard
@@ -56,7 +57,7 @@ tests/          unit/integration tests
 
 ## Tech stack
 - **Backend:** Python 3.11+, FastAPI
-- **Graph DB:** Neo4j | **Structured DB:** PostgreSQL
+- **Storage:** in-memory NetworkX graph (database persistence is future work)
 - **Stylometry:** sentence-transformers (embedding similarity)
 - **Explanation layer:** LLM API (Groq / OpenAI / Gemini — pick one, see `.env.example`)
 - **Dashboard:** Streamlit
@@ -64,37 +65,22 @@ tests/          unit/integration tests
 
 ## Prerequisites
 - Python 3.11+
-- Docker + Docker Compose
 - Git
-- An API key for your chosen LLM provider (for the `llm_explain` module)
 
 ## Quickstart
-```bash
+The current prototype uses the local synthetic dataset and in-memory NetworkX storage. No database, Docker service, or LLM key is required for the API.
+
+```powershell
 git clone <this-repo-url>
 cd threat-actor-attribution
-
-# 1. Start infra (Neo4j + Postgres)
-cd docker && docker compose up -d && cd ..
-
-# 2. Configure environment
-cp .env.example .env
-# edit .env with your local DB credentials and LLM API key
-
-# 3. Set up backend
+python -m pip install -r backend/requirements.txt
 cd backend
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-# backend now running at http://localhost:8000  (see /health)
-
-# 4. Set up dashboard (new terminal)
-cd dashboard
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py
-# dashboard now running at http://localhost:8501
+uvicorn app.main:app --reload --port 8000
 ```
-Or just run `bash scripts/setup.sh` to bootstrap both virtual environments at once.
+
+The API is available at `http://127.0.0.1:8000`; interactive documentation is at `/docs`. Run Uvicorn from the `backend` directory so `app.main` resolves correctly. An LLM key is optional; without one, explanations use the deterministic template.
+
+Available endpoints: `GET /health`, `GET /personas`, `GET /personas/{id}`, `POST /compare`, `GET /personas/{id}/candidates`, and `GET /export?format=csv|json|report`. The `since` and `until` filters select personas whose observed date range overlaps the requested interval.
 
 ## Running tests
 From the repo root:
