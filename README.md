@@ -80,6 +80,18 @@ uvicorn app.main:app --reload --port 8000
 
 The API is available at `http://127.0.0.1:8000`; interactive documentation is at `/docs`. Run Uvicorn from the `backend` directory so `app.main` resolves correctly. An LLM key is optional; without one, explanations use the deterministic template.
 
+### Dashboard
+
+In a separate terminal from the repository root, install the dashboard dependencies and start Streamlit:
+
+```powershell
+python -m pip install -r dashboard/requirements.txt
+$env:ATTRIBUTION_API_URL = "http://127.0.0.1:8000"
+python -m streamlit run dashboard/app.py
+```
+
+The dashboard client only accepts loopback API hosts (`127.0.0.1`, `localhost`, or `::1`). The date-range control filters by the persona's `first_seen` and `last_seen` fields.
+
 Available endpoints: `GET /health`, `GET /personas`, `GET /personas/{id}`, `POST /compare`, `GET /personas/{id}/candidates`, and `GET /export?format=csv|json|report`. The `since` and `until` filters select personas whose observed date range overlaps the requested interval.
 
 ### Confidence tiers

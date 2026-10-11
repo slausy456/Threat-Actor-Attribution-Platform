@@ -23,6 +23,7 @@ decisions made in steps 3-5.
       evidence-validation tests
 - [x] **Step 6 — Storage:** in-memory NetworkX persona/identifier graph and cached comparisons
 - [x] **Step 7 — API:** FastAPI persona, compare, candidate, and CSV/JSON/Markdown export routes
+- [x] **Step 8 — Dashboard:** Streamlit analyst workflows backed by the local API, timeline, graph, and exports
 - Check: `python -m pytest tests -q` -> `12 passed, 9 skipped`
 
 ---
