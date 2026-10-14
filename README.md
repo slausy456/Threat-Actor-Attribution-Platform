@@ -131,6 +131,35 @@ python -m pytest tests -q
 See `data/README.md` before adding anything to `data/`. Only legal, published
 research datasets are permitted — no live-scraped dark web data.
 
+### VeriDark stylometry evaluation
+
+For the optional real-data pair-verification evaluation, place locally obtained
+VeriDark JSON files under `data/veridark/` with one file per pair and this
+layout:
+
+```text
+data/veridark/
+   train/<pair>.json
+   val/<pair>.json
+   test/<pair>.json
+```
+
+Each file must contain `{"id": "...", "pair": ["text1", "text2"], "same": true}`.
+The evaluator reads only these three split directories; it ignores duplicate
+folders such as `val+test/` and `train+val+test/`. Get the dataset only from its
+authorized published source, review and follow its access terms and license,
+and retain any restrictions on reuse or redistribution. The files stay local
+and are ignored by Git. The script does not download data or connect to any
+service. Validation selects the decision threshold; test is evaluated with
+that threshold unchanged. Texts may recur across pairs, so pairs are not
+independent observations.
+
+Run the evaluation from the repository root with:
+
+```powershell
+python scripts/evaluate_stylometry_real.py
+```
+
 ## Documentation
 - `docs/architecture.md` — pipeline diagram and data model
 - `docs/roadmap.md` — 80-day phased plan + honest full-scope estimate
