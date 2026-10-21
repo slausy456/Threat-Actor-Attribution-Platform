@@ -69,7 +69,7 @@ class SignalResult(BaseModel):
     """What every pillar returns. Matches the inputs fusion/scorer.py expects."""
 
     score: float = Field(ge=0.0, le=1.0)
-    evidence: list[str] = Field(default_factory=list)  # human-readable reasons
+    evidence: list[dict[str, str]] = Field(default_factory=list)  # typed, human-readable reasons
 
 
 # ---------------------------------------------------------------------------

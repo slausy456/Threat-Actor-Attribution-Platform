@@ -20,6 +20,7 @@ def score_pair(a: Persona, b: Persona, weights: dict | None = None) -> dict:
             stylometry=results["stylometry"].score,
         ),
         weights,
+        evidence={k: v.evidence for k, v in results.items()},
     )
     fused["evidence"] = {k: v.evidence for k, v in results.items()}
     return fused

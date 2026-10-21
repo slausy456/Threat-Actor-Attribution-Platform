@@ -83,7 +83,7 @@ def compare(a: Persona, b: Persona) -> SignalResult:
     b_text = _persona_text(b)
 
     if not a_text or not b_text:
-        return SignalResult(score=0.0, evidence=["no text available to compare"])
+        return SignalResult(score=0.0, evidence=[{"kind": "style", "description": "no text available to compare"}])
 
     vectorizer = TfidfVectorizer(
         analyzer="char",
@@ -100,7 +100,7 @@ def compare(a: Persona, b: Persona) -> SignalResult:
     final_score = max(0.0, min(1.0, final_score))
 
     evidence = [
-        f"character n-gram similarity {char_similarity:.2f}",
-        f"style-habit similarity {style_similarity:.2f}",
+        {"kind": "style", "description": f"character n-gram similarity {char_similarity:.2f}"},
+        {"kind": "style", "description": f"style-habit similarity {style_similarity:.2f}"},
     ]
     return SignalResult(score=round(final_score, 3), evidence=evidence)

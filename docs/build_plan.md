@@ -46,10 +46,9 @@ scenario is the table in `docs/pillar_contract.md`.
 
 ### 3b. Infrastructure — `services/infrastructure_scan/matcher.py`
 - Cert hash match -> strong (~0.90). Favicon hash match -> strong-ish (~0.70).
-- Server banner match -> weak. A COMMON banner (`nginx/1.18.0 (Ubuntu)`,
-  `Apache/2.4.41 (Ubuntu)`) should add ~0.05; a rare custom banner ~0.40.
-  Keep a `COMMON_BANNERS` set in the module (or compute banner frequency from the
-  dataset once, at import). The `shared_hosting` trap must stay low.
+- Server banner match -> weak. Score from the number of dataset personas carrying
+  the banner; frequent banners approach 0.05, while rarer banners score higher.
+  Cap a banner-only infrastructure result at 0.30. The `shared_hosting` trap stays low.
 - Combine with noisy-OR as above. Dataset records only — NO live scanning.
 - Done when: high for infra_only / multi_signal, low for shared_hosting.
 

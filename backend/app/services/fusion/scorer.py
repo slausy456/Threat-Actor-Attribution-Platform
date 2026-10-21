@@ -26,6 +26,13 @@ DEFAULT_WEIGHTS = {
     "stylometry": 0.30,
 }
 
+_CONFIG_PATH = Path(__file__).resolve().with_name("config.json")
+_CONFIG = json.loads(_CONFIG_PATH.read_text())
+MIN_PILLAR_SCORE = float(_CONFIG["MIN_PILLAR_SCORE"])
+SINGLE_SIGNAL_CAP = float(_CONFIG["SINGLE_SIGNAL_CAP"])
+HARD_IDENTIFIER_MIN = float(_CONFIG["HARD_IDENTIFIER_MIN"])
+HARD_IDENTIFIER_KINDS = {"pgp", "wallet", "cert_hash"}
+
 # These cutoffs come from scripts/evaluate_retrieval.py on the synthetic dataset:
 # the strong tier had 0 false positives among 2,556 pairs; tuned on this data,
 # this result is not proven to generalise.
@@ -33,8 +40,10 @@ STRONG_TIER_THRESHOLD = 0.90
 MODERATE_TIER_THRESHOLD = 0.70
 
 
-def tier(confidence: float) -> str:
-    """Map a confidence score to a descriptive tier without changing the score."""
+def tier(confidence: float, *, single_signal: bool = False) -> str:
+    """Map confidence to a tier; an uncorroborated result is always a lead."""
+    if single_signal:
+        return "lead"
     if confidence >= STRONG_TIER_THRESHOLD:
         return "strong"
     if confidence >= MODERATE_TIER_THRESHOLD:
@@ -63,7 +72,7 @@ def _load_model_weights() -> dict | None:
     }
 
 
-def fuse(scores: SignalScores, weights: dict = None) -> dict:
+def fuse(scores: SignalScores, weights: dict = None, evidence: dict | None = None) -> dict:
     """
     Combine signal scores into one weighted confidence score.
 
@@ -94,9 +103,30 @@ def fuse(scores: SignalScores, weights: dict = None) -> dict:
             + scores.stylometry * w["stylometry"]
         )
         weights_used = w.copy()
+    raw_confidence = round(final, 3)
+    pillar_scores = {
+        "infrastructure": scores.infrastructure,
+        "identity_graph": scores.identity_graph,
+        "stylometry": scores.stylometry,
+    }
+    self_corroborating = any(
+        pillar_scores.get(pillar, 0.0) >= HARD_IDENTIFIER_MIN
+        and any(
+            isinstance(item, dict) and item.get("kind") in HARD_IDENTIFIER_KINDS
+            for item in items
+        )
+        for pillar, items in (evidence or {}).items()
+    )
+    single_signal = not self_corroborating and sum(
+        score >= MIN_PILLAR_SCORE
+        for score in pillar_scores.values()
+    ) < 2
+    confidence = round(min(raw_confidence, SINGLE_SIGNAL_CAP), 3) if single_signal else raw_confidence
     return {
-        "confidence": round(final, 3),
-        "tier": tier(round(final, 3)),
+        "confidence": confidence,
+        "raw_confidence": raw_confidence,
+        "single_signal": single_signal,
+        "tier": tier(confidence, single_signal=single_signal),
         "breakdown": {
             "infrastructure": scores.infrastructure,
             "identity_graph": scores.identity_graph,

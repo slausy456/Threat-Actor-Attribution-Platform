@@ -29,7 +29,7 @@ def test_returns_valid_signal_result_for_every_pair(name):
         r = run(PILLARS[name], PERSONAS[p.persona_a], PERSONAS[p.persona_b])
         assert isinstance(r, SignalResult)
         assert 0.0 <= r.score <= 1.0
-        assert all(isinstance(e, str) for e in r.evidence)
+        assert all(isinstance(e, dict) and isinstance(e.get("kind"), str) for e in r.evidence)
 
 
 @pytest.mark.parametrize("name", PILLARS)

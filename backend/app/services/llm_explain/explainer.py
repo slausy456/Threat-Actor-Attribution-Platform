@@ -2,11 +2,16 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
+import threading
+import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 
 import httpx
-from app.services.fusion.scorer import tier
+from app.services.fusion.scorer import MIN_PILLAR_SCORE, tier
 
 PILLAR_NAMES = {
     "identity_graph": "identity graph",
@@ -14,7 +19,7 @@ PILLAR_NAMES = {
     "stylometry": "writing style",
 }
 PROVIDERS = {
-    "groq": ("https://api.groq.com/openai/v1/chat/completions", "llama-3.1-8b-instant"),
+    "groq": ("https://api.groq.com/openai/v1/chat/completions", "openai/gpt-oss-20b"),
     "openai": ("https://api.openai.com/v1/chat/completions", "gpt-4o-mini"),
 }
 IDENTIFIER_PATTERNS = (
@@ -27,17 +32,55 @@ UNCERTAINTY_TERMS = re.compile(
     r"\b(uncertain|uncertainty|tentative|possible|possibly|may|might|suggests?|limited|confidence|likely)\b",
     re.IGNORECASE,
 )
+NUMBERS = re.compile(r"\b\d+(?:\.\d+)?\b")
+FALLBACK_LABELS = {
+    "no_key": "no API key",
+    "unknown_provider": "unknown provider",
+    "timeout": "request timed out",
+    "network_error": "network error",
+    "validation_rejected": "response failed validation",
+    "invalid_response": "invalid response",
+    "rate_limited": "rate limited, retrying later",
+    "call_budget_exhausted": "session call budget exhausted",
+}
+logger = logging.getLogger(__name__)
+_LLM_CALL_LOCK = threading.Lock()
+_LAST_LLM_CALL_AT = 0.0
+_CIRCUIT_OPEN_UNTIL = 0.0
+MIN_SECONDS_BETWEEN_CALLS = 1.0
+CIRCUIT_BREAK_SECONDS = 60.0
+
+
+def configured_model() -> str:
+    provider = os.getenv("LLM_PROVIDER", "groq").strip().lower()
+    default_model = PROVIDERS.get(provider, (None, "unknown"))[1]
+    return os.getenv("LLM_MODEL", default_model).strip() or default_model
+
+
+def reset_llm_controls() -> None:
+    """Reset process limiter state for isolated tests."""
+    global _LAST_LLM_CALL_AT, _CIRCUIT_OPEN_UNTIL
+    with _LLM_CALL_LOCK:
+        _LAST_LLM_CALL_AT = 0.0
+        _CIRCUIT_OPEN_UNTIL = 0.0
 
 
 def _evidence_map(result: dict) -> dict[str, list[str]]:
     raw = result.get("evidence", {})
     if not isinstance(raw, dict):
         return {}
-    return {
-        key: [item.strip() for item in items if isinstance(item, str) and item.strip()]
-        for key, items in raw.items()
-        if isinstance(items, (list, tuple))
-    }
+    normalized = {}
+    for key, items in raw.items():
+        if not isinstance(items, (list, tuple)):
+            continue
+        descriptions = []
+        for item in items:
+            if isinstance(item, str) and item.strip():
+                descriptions.append(item.strip())
+            elif isinstance(item, dict) and isinstance(item.get("description"), str):
+                descriptions.append(item["description"].strip())
+        normalized[key] = descriptions
+    return normalized
 
 
 def _score(value) -> float:
@@ -54,7 +97,9 @@ def _template(result: dict) -> str:
         breakdown = {}
     scores = {key: _score(breakdown.get(key)) for key in PILLAR_NAMES}
     evidence = _evidence_map(result)
-    confidence_line = _confidence_hedge(confidence, scores)
+    confidence_line = _confidence_hedge(
+        confidence, scores, single_signal=bool(result.get("single_signal", False))
+    )
     evidence_line = _evidence_summary(scores, evidence)
     return (
         f"{confidence_line} {evidence_line} "
@@ -62,10 +107,14 @@ def _template(result: dict) -> str:
     )
 
 
-def _confidence_hedge(confidence: float, scores: dict[str, float]) -> str:
-    confidence_tier = tier(confidence)
-    corroborating = sum(score >= 0.30 for score in scores.values())
-    if confidence_tier == "strong" and corroborating >= 2:
+def _confidence_hedge(
+    confidence: float, scores: dict[str, float], *, single_signal: bool = False
+) -> str:
+    confidence_tier = tier(confidence, single_signal=single_signal)
+    corroborating = sum(score >= MIN_PILLAR_SCORE for score in scores.values())
+    if confidence_tier == "lead":
+        hedge = "fewer than two pillars corroborate this lead, so the result is tentative"
+    elif confidence_tier == "strong" and corroborating >= 2:
         hedge = "several independent signals agree; still a lead for human review"
     elif confidence_tier == "weak":
         hedge = "this is tentative"
@@ -121,14 +170,43 @@ def _valid_llm_text(text: str, evidence: dict[str, list[str]]) -> bool:
     return _identifiers(text).issubset(_identifiers(source))
 
 
-def _llm_explanation(result: dict, evidence: dict[str, list[str]]) -> str | None:
-    api_key = os.getenv("LLM_API_KEY", "").strip()
-    provider = os.getenv("LLM_PROVIDER", "groq").strip().lower()
-    if not api_key or provider not in PROVIDERS:
-        return None
+def _numeric_claims_grounded(text: str, result: dict, evidence: dict[str, list[str]]) -> bool:
+    source = " ".join(item for items in evidence.values() for item in items)
+    source += " " + json.dumps(
+        {
+            "confidence": result.get("confidence"),
+            "breakdown": result.get("breakdown", {}),
+        },
+        ensure_ascii=True,
+    )
+    return set(NUMBERS.findall(text)) <= set(NUMBERS.findall(source))
 
-    endpoint, default_model = PROVIDERS[provider]
-    model = os.getenv("LLM_MODEL", default_model).strip() or default_model
+
+def _retry_after_seconds(value: str | None) -> float:
+    if not value:
+        return 0.0
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        try:
+            retry_at = parsedate_to_datetime(value)
+            if retry_at.tzinfo is None:
+                retry_at = retry_at.replace(tzinfo=timezone.utc)
+            return max(0.0, (retry_at - datetime.now(timezone.utc)).total_seconds())
+        except (TypeError, ValueError, OverflowError):
+            return 0.0
+
+
+def _request_llm_explanation(
+    result: dict,
+    evidence: dict[str, list[str]],
+    *,
+    endpoint: str,
+    model: str,
+    api_key: str,
+    max_calls: int = 2,
+) -> tuple[str | None, str | None, int]:
+    global _LAST_LLM_CALL_AT, _CIRCUIT_OPEN_UNTIL
     prompt_data = {
         "confidence": result.get("confidence"),
         "breakdown": result.get("breakdown", {}),
@@ -146,37 +224,147 @@ def _llm_explanation(result: dict, evidence: dict[str, list[str]]) -> str | None
         },
         {"role": "user", "content": json.dumps(prompt_data, ensure_ascii=True)},
     ]
+    calls = 0
+    rate_limit_seen = False
+    with _LLM_CALL_LOCK:
+        if time.monotonic() < _CIRCUIT_OPEN_UNTIL:
+            return None, "rate_limited", calls
+        for attempt in range(min(2, max(1, max_calls))):
+            wait_for_slot = MIN_SECONDS_BETWEEN_CALLS - (time.monotonic() - _LAST_LLM_CALL_AT)
+            if _LAST_LLM_CALL_AT and wait_for_slot > 0:
+                time.sleep(wait_for_slot)
+            _LAST_LLM_CALL_AT = time.monotonic()
+            calls += 1
+            try:
+                response = httpx.post(
+                    endpoint,
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={"model": model, "messages": messages, "temperature": 0.0},
+                    timeout=10.0,
+                )
+                response.raise_for_status()
+            except httpx.TimeoutException:
+                if rate_limit_seen:
+                    _CIRCUIT_OPEN_UNTIL = time.monotonic() + CIRCUIT_BREAK_SECONDS
+                    return None, "rate_limited", calls
+                return None, "timeout", calls
+            except httpx.HTTPStatusError as error:
+                if error.response.status_code == 429:
+                    if attempt == 0 and calls < max_calls:
+                        rate_limit_seen = True
+                        retry_after = _retry_after_seconds(error.response.headers.get("Retry-After"))
+                        if retry_after:
+                            time.sleep(retry_after)
+                        continue
+                    _CIRCUIT_OPEN_UNTIL = time.monotonic() + CIRCUIT_BREAK_SECONDS
+                    return None, "rate_limited", calls
+                if rate_limit_seen:
+                    _CIRCUIT_OPEN_UNTIL = time.monotonic() + CIRCUIT_BREAK_SECONDS
+                    return None, "rate_limited", calls
+                return None, f"http_error_{error.response.status_code}", calls
+            except httpx.RequestError:
+                if rate_limit_seen:
+                    _CIRCUIT_OPEN_UNTIL = time.monotonic() + CIRCUIT_BREAK_SECONDS
+                    return None, "rate_limited", calls
+                return None, "network_error", calls
+            if rate_limit_seen:
+                _CIRCUIT_OPEN_UNTIL = time.monotonic() + CIRCUIT_BREAK_SECONDS
+            break
+        else:
+            return None, "rate_limited", calls
+
     try:
-        response = httpx.post(
-            endpoint,
-            headers={"Authorization": f"Bearer {api_key}"},
-            json={"model": model, "messages": messages, "temperature": 0.0},
-            timeout=10.0,
+        text = response.json()["choices"][0]["message"]["content"]
+        if not isinstance(text, str):
+            return None, "invalid_response", calls
+        text = text.strip()
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError):
+        return None, "invalid_response", calls
+
+    if (
+        api_key in text
+        or not _valid_llm_text(text, evidence)
+        or not _numeric_claims_grounded(text, result, evidence)
+    ):
+        return None, "validation_rejected", calls
+    return text, None, calls
+
+
+def explain_result(
+    result: dict,
+    *,
+    allow_llm: bool = True,
+    disabled_reason: str = "llm_disabled",
+    max_calls: int = 2,
+) -> dict[str, str | None | int]:
+    """Return an explanation with its source and a human-readable source label."""
+    if not isinstance(result, dict):
+        result = {}
+    evidence = _evidence_map(result)
+    provider = os.getenv("LLM_PROVIDER", "groq").strip().lower()
+    api_key = os.getenv("LLM_API_KEY", "").strip()
+    model = configured_model()
+    started_at = time.perf_counter()
+
+    llm_summary = None
+    calls_used = 0
+    if not allow_llm:
+        fallback_reason = disabled_reason
+    elif not api_key:
+        fallback_reason = "no_key"
+    elif provider not in PROVIDERS:
+        fallback_reason = "unknown_provider"
+    else:
+        endpoint, _ = PROVIDERS[provider]
+        llm_summary, fallback_reason, calls_used = _request_llm_explanation(
+            result,
+            evidence,
+            endpoint=endpoint,
+            model=model,
+            api_key=api_key,
+            max_calls=max_calls,
         )
-        response.raise_for_status()
-        text = response.json()["choices"][0]["message"]["content"].strip()
-        if isinstance(text, str) and _valid_llm_text(text, evidence):
-            return text
-    except Exception:
-        return None
-    return None
+
+    if llm_summary is None:
+        explanation = _template(result)
+        source = "template"
+        reason_label = FALLBACK_LABELS.get(
+            fallback_reason,
+            f"HTTP error {fallback_reason.removeprefix('http_error_')}",
+        )
+        label = f"Template ({reason_label})"
+    else:
+        confidence = _score(result.get("confidence"))
+        breakdown = result.get("breakdown", {})
+        if not isinstance(breakdown, dict):
+            breakdown = {}
+        scores = {key: _score(breakdown.get(key)) for key in PILLAR_NAMES}
+        explanation = (
+            f"{_confidence_hedge(confidence, scores, single_signal=bool(result.get('single_signal', False)))} {llm_summary} "
+            "Treat this as a lead for human review, not proof of attribution."
+        )
+        source = "llm"
+        fallback_reason = None
+        label = f"AI-generated ({model})"
+
+    logger.info(
+        "explanation source=%s reason=%s provider=%s model=%s latency_ms=%d key_length=%d",
+        source,
+        fallback_reason or "none",
+        provider,
+        model,
+        round((time.perf_counter() - started_at) * 1000),
+        len(api_key),
+    )
+    return {
+        "explanation": explanation,
+        "explanation_source": source,
+        "fallback_reason": fallback_reason,
+        "explanation_label": label,
+        "llm_calls_used": calls_used,
+    }
 
 
 def explain(result: dict) -> str:
     """Explain a score_pair result, using an optional LLM with a safe fallback."""
-    if not isinstance(result, dict):
-        result = {}
-    evidence = _evidence_map(result)
-    llm_summary = _llm_explanation(result, evidence)
-    if llm_summary is None:
-        return _template(result)
-
-    confidence = _score(result.get("confidence"))
-    breakdown = result.get("breakdown", {})
-    if not isinstance(breakdown, dict):
-        breakdown = {}
-    scores = {key: _score(breakdown.get(key)) for key in PILLAR_NAMES}
-    return (
-        f"{_confidence_hedge(confidence, scores)} {llm_summary} "
-        "Treat this as a lead for human review, not proof of attribution."
-    )
+    return str(explain_result(result)["explanation"])
