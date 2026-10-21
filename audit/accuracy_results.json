@@ -1,0 +1,618 @@
+{
+  "persona_count": 72,
+  "pair_count": 2556,
+  "positive_pairs": 24,
+  "negative_pairs": 2532,
+  "metrics": [
+    {
+      "threshold": 0.9,
+      "tp": 20,
+      "fp": 0,
+      "tn": 2532,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8333333333333334,
+      "false_positive_rate": 0.0
+    },
+    {
+      "threshold": 0.7,
+      "tp": 20,
+      "fp": 0,
+      "tn": 2532,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8333333333333334,
+      "false_positive_rate": 0.0
+    }
+  ],
+  "scenario_metrics": [
+    {
+      "scenario": "copycat_style",
+      "pair_count": 3,
+      "mean_confidence": 0.2966666666666667,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "infra_only",
+      "pair_count": 3,
+      "mean_confidence": 0.992,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "infra_restyled",
+      "pair_count": 3,
+      "mean_confidence": 0.9326666666666666,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "multi_signal",
+      "pair_count": 2,
+      "mean_confidence": 1.0,
+      "count_ge_0.90": 2,
+      "count_ge_0.70": 2
+    },
+    {
+      "scenario": "pgp_restyled",
+      "pair_count": 3,
+      "mean_confidence": 0.969,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "pgp_reuse",
+      "pair_count": 3,
+      "mean_confidence": 0.995,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "random",
+      "pair_count": 20,
+      "mean_confidence": 0.2539,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "shared_hosting",
+      "pair_count": 3,
+      "mean_confidence": 0.38133333333333336,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "similar_handle",
+      "pair_count": 3,
+      "mean_confidence": 0.35033333333333333,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "style_only",
+      "pair_count": 4,
+      "mean_confidence": 0.61025,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "wallet_restyled",
+      "pair_count": 3,
+      "mean_confidence": 0.9673333333333334,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "wallet_reuse",
+      "pair_count": 3,
+      "mean_confidence": 0.996,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    }
+  ],
+  "calibration": [
+    {
+      "bin": "0.0-0.1",
+      "count": 123,
+      "mean_confidence": 0.0881869918699187,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.1-0.2",
+      "count": 687,
+      "mean_confidence": 0.1502052401746725,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.2-0.3",
+      "count": 784,
+      "mean_confidence": 0.24454464285714286,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.3-0.4",
+      "count": 526,
+      "mean_confidence": 0.34398288973384034,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.4-0.5",
+      "count": 262,
+      "mean_confidence": 0.44570610687022905,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.5-0.6",
+      "count": 108,
+      "mean_confidence": 0.5438796296296297,
+      "actual_same_actor_fraction": 0.009259259259259259
+    },
+    {
+      "bin": "0.6-0.7",
+      "count": 46,
+      "mean_confidence": 0.6365652173913043,
+      "actual_same_actor_fraction": 0.06521739130434782
+    },
+    {
+      "bin": "0.7-0.8",
+      "count": 0,
+      "mean_confidence": null,
+      "actual_same_actor_fraction": null
+    },
+    {
+      "bin": "0.8-0.9",
+      "count": 0,
+      "mean_confidence": null,
+      "actual_same_actor_fraction": null
+    },
+    {
+      "bin": "0.9-1.0",
+      "count": 20,
+      "mean_confidence": 0.9778,
+      "actual_same_actor_fraction": 1.0
+    }
+  ],
+  "highest_scoring_false_positives": [
+    {
+      "a": "P001",
+      "b": "P018",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.817,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.15,
+        "stylometry": 0.767
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "handle",
+            "description": "same handle ghost_hub"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.72"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.87"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P001",
+      "b": "P061",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.762,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.869
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.82"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.98"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P002",
+      "b": "P017",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.683,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.785
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.77"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.83"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P002",
+      "b": "P061",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.664,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.767
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.69"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.94"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P003",
+      "b": "P047",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.786,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.898
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.88"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.95"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P013",
+      "b": "P062",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.789,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.902
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.86"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 1.00"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P014",
+      "b": "P062",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.751,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.856
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.80"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.98"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P016",
+      "b": "P050",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.682,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.784
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.78"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.79"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P019",
+      "b": "P064",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.686,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.788
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.72"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.95"
+          }
+        ]
+      }
+    },
+    {
+      "a": "P020",
+      "b": "P064",
+      "same_actor": false,
+      "confidence": 0.65,
+      "raw_confidence": 0.657,
+      "single_signal": true,
+      "tier": "lead",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.76
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          {
+            "kind": "none",
+            "description": "no shared identifiers"
+          }
+        ],
+        "infrastructure": [
+          {
+            "kind": "none",
+            "description": "no shared infrastructure fingerprints"
+          }
+        ],
+        "stylometry": [
+          {
+            "kind": "style",
+            "description": "character n-gram similarity 0.66"
+          },
+          {
+            "kind": "style",
+            "description": "style-habit similarity 0.99"
+          }
+        ]
+      }
+    }
+  ]
+}

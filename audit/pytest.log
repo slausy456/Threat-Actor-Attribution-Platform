@@ -1,0 +1,116 @@
+
+==================================== ERRORS ====================================
+______________________ ERROR collecting tests/test_api.py ______________________
+ImportError while importing test module '/home/scoder/Downloads/CollageWork/Threat-Actor-Attribution-Platform/tests/test_api.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_api.py:5: in <module>
+    from app.main import app
+backend/app/main.py:4: in <module>
+    from app.routers.api import router
+backend/app/routers/api.py:14: in <module>
+    from app.services.storage.graph_store import GraphStore
+backend/app/services/storage/graph_store.py:11: in <module>
+    from app.services.fusion.pipeline import score_pair
+backend/app/services/fusion/pipeline.py:6: in <module>
+    from app.services.stylometry import matcher as style
+backend/app/services/stylometry/matcher.py:21: in <module>
+    from sklearn.feature_extraction.text import TfidfVectorizer
+E   ModuleNotFoundError: No module named 'sklearn'
+________________ ERROR collecting tests/test_confidence_tier.py ________________
+ImportError while importing test module '/home/scoder/Downloads/CollageWork/Threat-Actor-Attribution-Platform/tests/test_confidence_tier.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_confidence_tier.py:3: in <module>
+    from app.main import app
+backend/app/main.py:4: in <module>
+    from app.routers.api import router
+backend/app/routers/api.py:14: in <module>
+    from app.services.storage.graph_store import GraphStore
+backend/app/services/storage/graph_store.py:11: in <module>
+    from app.services.fusion.pipeline import score_pair
+backend/app/services/fusion/pipeline.py:6: in <module>
+    from app.services.stylometry import matcher as style
+backend/app/services/stylometry/matcher.py:21: in <module>
+    from sklearn.feature_extraction.text import TfidfVectorizer
+E   ModuleNotFoundError: No module named 'sklearn'
+_______________ ERROR collecting tests/test_dashboard_client.py ________________
+ImportError while importing test module '/home/scoder/Downloads/CollageWork/Threat-Actor-Attribution-Platform/tests/test_dashboard_client.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_dashboard_client.py:6: in <module>
+    from dashboard import client
+dashboard/client.py:15: in <module>
+    import plotly.graph_objects as go
+E   ModuleNotFoundError: No module named 'plotly'
+____________________ ERROR collecting tests/test_explain.py ____________________
+ImportError while importing test module '/home/scoder/Downloads/CollageWork/Threat-Actor-Attribution-Platform/tests/test_explain.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_explain.py:4: in <module>
+    from app.services.fusion.pipeline import score_pair
+backend/app/services/fusion/pipeline.py:6: in <module>
+    from app.services.stylometry import matcher as style
+backend/app/services/stylometry/matcher.py:21: in <module>
+    from sklearn.feature_extraction.text import TfidfVectorizer
+E   ModuleNotFoundError: No module named 'sklearn'
+____________________ ERROR collecting tests/test_fusion.py _____________________
+ImportError while importing test module '/home/scoder/Downloads/CollageWork/Threat-Actor-Attribution-Platform/tests/test_fusion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_fusion.py:2: in <module>
+    from app.services.fusion.pipeline import score_pair
+backend/app/services/fusion/pipeline.py:6: in <module>
+    from app.services.stylometry import matcher as style
+backend/app/services/stylometry/matcher.py:21: in <module>
+    from sklearn.feature_extraction.text import TfidfVectorizer
+E   ModuleNotFoundError: No module named 'sklearn'
+________________ ERROR collecting tests/test_pillar_contract.py ________________
+ImportError while importing test module '/home/scoder/Downloads/CollageWork/Threat-Actor-Attribution-Platform/tests/test_pillar_contract.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pillar_contract.py:12: in <module>
+    from app.services.stylometry import matcher as style
+backend/app/services/stylometry/matcher.py:21: in <module>
+    from sklearn.feature_extraction.text import TfidfVectorizer
+E   ModuleNotFoundError: No module named 'sklearn'
+________________ ERROR collecting tests/test_stylometry_real.py ________________
+ImportError while importing test module '/home/scoder/Downloads/CollageWork/Threat-Actor-Attribution-Platform/tests/test_stylometry_real.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_stylometry_real.py:3: in <module>
+    from scripts import evaluate_stylometry_real as evaluator
+scripts/evaluate_stylometry_real.py:18: in <module>
+    from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
+E   ModuleNotFoundError: No module named 'sklearn'
+=========================== short test summary info ============================
+ERROR tests/test_api.py
+ERROR tests/test_confidence_tier.py
+ERROR tests/test_dashboard_client.py
+ERROR tests/test_explain.py
+ERROR tests/test_fusion.py
+ERROR tests/test_pillar_contract.py
+ERROR tests/test_stylometry_real.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!!
+7 errors in 0.66s
