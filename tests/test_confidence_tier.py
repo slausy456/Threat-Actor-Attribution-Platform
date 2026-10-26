@@ -28,4 +28,6 @@ def test_compare_and_candidates_include_tier():
 
     candidates = client.get("/personas/P001/candidates", params={"top": 3})
     assert candidates.status_code == 200
-    assert all(candidate["tier"] in {"strong", "moderate", "weak"} for candidate in candidates.json())
+    assert all(candidate["tier"] in {"strong", "moderate", "weak", "lead"} for candidate in candidates.json())
+    assert "single_signal" in comparison.json()
+    assert "raw_confidence" in comparison.json()

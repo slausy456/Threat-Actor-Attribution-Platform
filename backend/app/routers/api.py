@@ -29,11 +29,16 @@ class CompareRequest(BaseModel):
 
 class ComparisonResponse(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
-    tier: Literal["strong", "moderate", "weak"]
+    raw_confidence: float = Field(ge=0.0, le=1.0)
+    single_signal: bool
+    tier: Literal["strong", "moderate", "weak", "lead"]
     breakdown: dict[str, float]
     weights_used: dict[str, float]
-    evidence: dict[str, list[str]]
+    evidence: dict[str, list[dict[str, str]]]
     explanation: str
+    explanation_source: Literal["llm", "template"]
+    fallback_reason: str | None
+    explanation_label: str
 
 
 class CandidateResponse(ComparisonResponse):

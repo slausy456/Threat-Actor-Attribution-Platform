@@ -1,0 +1,492 @@
+{
+  "persona_count": 72,
+  "pair_count": 2556,
+  "positive_pairs": 24,
+  "negative_pairs": 2532,
+  "metrics": [
+    {
+      "threshold": 0.9,
+      "tp": 20,
+      "fp": 0,
+      "tn": 2532,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8333333333333334,
+      "false_positive_rate": 0.0
+    },
+    {
+      "threshold": 0.7,
+      "tp": 22,
+      "fp": 11,
+      "tn": 2521,
+      "fn": 2,
+      "precision": 0.6666666666666666,
+      "recall": 0.9166666666666666,
+      "false_positive_rate": 0.004344391785150079
+    }
+  ],
+  "scenario_metrics": [
+    {
+      "scenario": "copycat_style",
+      "pair_count": 3,
+      "mean_confidence": 0.2966666666666667,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "infra_only",
+      "pair_count": 3,
+      "mean_confidence": 0.992,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "infra_restyled",
+      "pair_count": 3,
+      "mean_confidence": 0.9326666666666666,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "multi_signal",
+      "pair_count": 2,
+      "mean_confidence": 1.0,
+      "count_ge_0.90": 2,
+      "count_ge_0.70": 2
+    },
+    {
+      "scenario": "pgp_restyled",
+      "pair_count": 3,
+      "mean_confidence": 0.969,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "pgp_reuse",
+      "pair_count": 3,
+      "mean_confidence": 0.995,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "random",
+      "pair_count": 20,
+      "mean_confidence": 0.27925,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 1
+    },
+    {
+      "scenario": "shared_hosting",
+      "pair_count": 3,
+      "mean_confidence": 0.36366666666666664,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "similar_handle",
+      "pair_count": 3,
+      "mean_confidence": 0.35033333333333333,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 0
+    },
+    {
+      "scenario": "style_only",
+      "pair_count": 4,
+      "mean_confidence": 0.675,
+      "count_ge_0.90": 0,
+      "count_ge_0.70": 2
+    },
+    {
+      "scenario": "wallet_restyled",
+      "pair_count": 3,
+      "mean_confidence": 0.9673333333333334,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    },
+    {
+      "scenario": "wallet_reuse",
+      "pair_count": 3,
+      "mean_confidence": 0.996,
+      "count_ge_0.90": 3,
+      "count_ge_0.70": 3
+    }
+  ],
+  "calibration": [
+    {
+      "bin": "0.0-0.1",
+      "count": 122,
+      "mean_confidence": 0.08813934426229508,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.1-0.2",
+      "count": 683,
+      "mean_confidence": 0.15015959004392387,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.2-0.3",
+      "count": 778,
+      "mean_confidence": 0.24439460154241646,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.3-0.4",
+      "count": 527,
+      "mean_confidence": 0.3442011385199241,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.4-0.5",
+      "count": 260,
+      "mean_confidence": 0.44555,
+      "actual_same_actor_fraction": 0.0
+    },
+    {
+      "bin": "0.5-0.6",
+      "count": 112,
+      "mean_confidence": 0.5432142857142858,
+      "actual_same_actor_fraction": 0.008928571428571428
+    },
+    {
+      "bin": "0.6-0.7",
+      "count": 41,
+      "mean_confidence": 0.6436585365853659,
+      "actual_same_actor_fraction": 0.024390243902439025
+    },
+    {
+      "bin": "0.7-0.8",
+      "count": 8,
+      "mean_confidence": 0.7475,
+      "actual_same_actor_fraction": 0.125
+    },
+    {
+      "bin": "0.8-0.9",
+      "count": 5,
+      "mean_confidence": 0.8346,
+      "actual_same_actor_fraction": 0.2
+    },
+    {
+      "bin": "0.9-1.0",
+      "count": 20,
+      "mean_confidence": 0.9778,
+      "actual_same_actor_fraction": 1.0
+    }
+  ],
+  "highest_scoring_false_positives": [
+    {
+      "a": "P045",
+      "b": "P054",
+      "same_actor": false,
+      "confidence": 0.865,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.4,
+        "identity_graph": 0.0,
+        "stylometry": 0.639
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "shared uncommon banner custom-srv/7.9"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.58",
+          "style-habit similarity 0.78"
+        ]
+      }
+    },
+    {
+      "a": "P001",
+      "b": "P018",
+      "same_actor": false,
+      "confidence": 0.854,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.2,
+        "stylometry": 0.767
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "same handle ghost_hub"
+        ],
+        "infrastructure": [
+          "no shared infrastructure fingerprints"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.72",
+          "style-habit similarity 0.87"
+        ]
+      }
+    },
+    {
+      "a": "P021",
+      "b": "P064",
+      "same_actor": false,
+      "confidence": 0.844,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.4,
+        "identity_graph": 0.0,
+        "stylometry": 0.602
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "shared uncommon banner custom-srv/8.9"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.44",
+          "style-habit similarity 0.99"
+        ]
+      }
+    },
+    {
+      "a": "P026",
+      "b": "P038",
+      "same_actor": false,
+      "confidence": 0.802,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.4,
+        "identity_graph": 0.0,
+        "stylometry": 0.541
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "shared uncommon banner custom-srv/4.8"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.67",
+          "style-habit similarity 0.24"
+        ]
+      }
+    },
+    {
+      "a": "P013",
+      "b": "P062",
+      "same_actor": false,
+      "confidence": 0.789,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.902
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "no shared infrastructure fingerprints"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.86",
+          "style-habit similarity 1.00"
+        ]
+      }
+    },
+    {
+      "a": "P003",
+      "b": "P047",
+      "same_actor": false,
+      "confidence": 0.786,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.898
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "no shared infrastructure fingerprints"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.88",
+          "style-habit similarity 0.95"
+        ]
+      }
+    },
+    {
+      "a": "P001",
+      "b": "P061",
+      "same_actor": false,
+      "confidence": 0.762,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.869
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "no shared infrastructure fingerprints"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.82",
+          "style-habit similarity 0.98"
+        ]
+      }
+    },
+    {
+      "a": "P014",
+      "b": "P062",
+      "same_actor": false,
+      "confidence": 0.751,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.856
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "no shared infrastructure fingerprints"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.80",
+          "style-habit similarity 0.98"
+        ]
+      }
+    },
+    {
+      "a": "P021",
+      "b": "P038",
+      "same_actor": false,
+      "confidence": 0.724,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.827
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "no shared infrastructure fingerprints"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.77",
+          "style-habit similarity 0.96"
+        ]
+      }
+    },
+    {
+      "a": "P033",
+      "b": "P056",
+      "same_actor": false,
+      "confidence": 0.716,
+      "tier": "moderate",
+      "breakdown": {
+        "infrastructure": 0.0,
+        "identity_graph": 0.0,
+        "stylometry": 0.818
+      },
+      "weights_used": {
+        "intercept": -2.946513511852086,
+        "identity_graph": 5.435351019529443,
+        "infrastructure": 4.459861983495649,
+        "stylometry": 4.729835109575675
+      },
+      "evidence": {
+        "identity_graph": [
+          "no shared identifiers"
+        ],
+        "infrastructure": [
+          "no shared infrastructure fingerprints"
+        ],
+        "stylometry": [
+          "character n-gram similarity 0.75",
+          "style-habit similarity 0.98"
+        ]
+      }
+    }
+  ]
+}
+
+Scenario metrics: scenario | pairs | mean confidence | >=0.90 | >=0.70
+copycat_style | 3 | 0.297 | 0 | 0
+infra_only | 3 | 0.992 | 3 | 3
+infra_restyled | 3 | 0.933 | 3 | 3
+multi_signal | 2 | 1.000 | 2 | 2
+pgp_restyled | 3 | 0.969 | 3 | 3
+pgp_reuse | 3 | 0.995 | 3 | 3
+random | 20 | 0.279 | 0 | 1
+shared_hosting | 3 | 0.364 | 0 | 0
+similar_handle | 3 | 0.350 | 0 | 0
+style_only | 4 | 0.675 | 0 | 2
+wallet_restyled | 3 | 0.967 | 3 | 3
+wallet_reuse | 3 | 0.996 | 3 | 3

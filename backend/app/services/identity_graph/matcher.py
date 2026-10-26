@@ -36,26 +36,26 @@ def _score_handle_similarity(a_handle: str, b_handle: str) -> tuple[float, str] 
 
 def compare(a: Persona, b: Persona) -> SignalResult:
     """Score shared identity signals using noisy-OR for independent evidence."""
-    evidence: list[str] = []
+    evidence: list[dict[str, str]] = []
     signal_scores: list[float] = []
 
     shared_pgp = a.values_of(IdentifierType.PGP_KEY) & b.values_of(IdentifierType.PGP_KEY)
     if shared_pgp:
         shared_value = sorted(shared_pgp)[0]
         signal_scores.append(0.90)
-        evidence.append(f"shared PGP key {shared_value}")
+        evidence.append({"kind": "pgp", "description": f"shared PGP key {shared_value}"})
 
     shared_wallet = a.values_of(IdentifierType.WALLET) & b.values_of(IdentifierType.WALLET)
     if shared_wallet:
         shared_value = sorted(shared_wallet)[0]
         signal_scores.append(0.85)
-        evidence.append(f"shared wallet {shared_value}")
+        evidence.append({"kind": "wallet", "description": f"shared wallet {shared_value}"})
 
     shared_handles = a.values_of(IdentifierType.HANDLE) & b.values_of(IdentifierType.HANDLE)
     if shared_handles:
         handle_value = sorted(shared_handles)[0]
-        signal_scores.append(0.20)
-        evidence.append(f"same handle {handle_value}")
+        signal_scores.append(0.15)
+        evidence.append({"kind": "handle", "description": f"same handle {handle_value}"})
 
     for a_handle in a.values_of(IdentifierType.HANDLE):
         for b_handle in b.values_of(IdentifierType.HANDLE):
@@ -65,16 +65,19 @@ def compare(a: Persona, b: Persona) -> SignalResult:
             if result is not None:
                 score, description = result
                 signal_scores.append(score)
-                evidence.append(description)
+                evidence.append({"kind": "handle", "description": description})
                 break
         else:
             continue
         break
 
     if not signal_scores:
-        evidence.append("no shared identifiers")
+        evidence.append({"kind": "none", "description": "no shared identifiers"})
         return SignalResult(score=0.0, evidence=evidence)
 
     score = 1.0 - prod(1.0 - s for s in signal_scores)
+    has_strong_identity = bool(shared_pgp or shared_wallet)
     final_score = round(min(score, 0.99), 3)
+    if not has_strong_identity:
+        final_score = min(final_score, 0.15)
     return SignalResult(score=final_score, evidence=evidence)

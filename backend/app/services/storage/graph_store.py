@@ -8,15 +8,15 @@ import networkx as nx
 
 from app.data_loader import load_personas
 from app.models.entities import IdentifierType, Persona
+from app.services.infrastructure_scan.matcher import _banner_score
 from app.services.fusion.pipeline import score_pair
-from app.services.llm_explain import explain
+from app.services.llm_explain.explainer import explain_result
 
 IDENTIFIER_WEIGHTS = {
     IdentifierType.PGP_KEY: 0.90,
     IdentifierType.WALLET: 0.85,
     IdentifierType.CERT_HASH: 0.90,
     IdentifierType.FAVICON_HASH: 0.70,
-    IdentifierType.SERVER_BANNER: 0.40,
 }
 
 
@@ -56,7 +56,11 @@ class GraphStore:
                 self.graph.add_edge(
                     persona_node,
                     identifier_node,
-                    weight=IDENTIFIER_WEIGHTS.get(identifier.type, 0.0),
+                    weight=(
+                        _banner_score(identifier.value)
+                        if identifier.type == IdentifierType.SERVER_BANNER
+                        else IDENTIFIER_WEIGHTS.get(identifier.type, 0.0)
+                    ),
                 )
 
     def get_persona(self, persona_id: str) -> Persona | None:
@@ -89,7 +93,7 @@ class GraphStore:
         cache_key = tuple(sorted((a, b)))
         if cache_key not in self._pair_cache:
             result = score_pair(persona_a, persona_b)
-            result["explanation"] = explain(result)
+            result.update(explain_result(result))
             self._pair_cache[cache_key] = result
         return deepcopy(self._pair_cache[cache_key])
 

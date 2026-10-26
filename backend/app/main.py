@@ -1,5 +1,10 @@
 """FastAPI entrypoint for the in-memory research-data prototype."""
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
+
+load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
 
 from app.routers.api import router
 from app.services.storage.graph_store import GraphStore

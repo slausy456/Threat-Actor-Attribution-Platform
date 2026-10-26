@@ -47,6 +47,9 @@ def test_compare_has_fusion_and_explanation_fields():
     assert set(body["breakdown"]) == {"identity_graph", "infrastructure", "stylometry"}
     assert body["evidence"]
     assert 20 <= len(body["explanation"]) <= 1200
+    assert body["explanation_source"] in {"llm", "template"}
+    assert body["fallback_reason"] is None if body["explanation_source"] == "llm" else bool(body["fallback_reason"])
+    assert body["explanation_label"].startswith(("AI-generated (", "Template ("))
     assert client.post("/compare", json={"a": "P001", "b": "missing"}).status_code == 404
     assert client.post("/compare", json={"a": "P001"}).status_code == 422
 
@@ -101,7 +104,16 @@ def test_graph_store_builds_identifier_links_and_caches_scores(monkeypatch):
         }
 
     monkeypatch.setattr(graph_store_module, "score_pair", fake_score_pair)
-    monkeypatch.setattr(graph_store_module, "explain", lambda result: "Tentative lead for human review.")
+    monkeypatch.setattr(
+        graph_store_module,
+        "explain_result",
+        lambda result: {
+            "explanation": "Tentative lead for human review.",
+            "explanation_source": "template",
+            "fallback_reason": "no_key",
+            "explanation_label": "Template (no API key)",
+        },
+    )
     store.compare("P001", "P002")
     store.compare("P002", "P001")
     assert len(calls) == 1

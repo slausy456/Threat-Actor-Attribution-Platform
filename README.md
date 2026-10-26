@@ -59,7 +59,7 @@ tests/          unit/integration tests
 - **Backend:** Python 3.11+, FastAPI
 - **Storage:** in-memory NetworkX graph (database persistence is future work)
 - **Stylometry:** sentence-transformers (embedding similarity)
-- **Explanation layer:** LLM API (Groq / OpenAI / Gemini — pick one, see `.env.example`)
+- **Explanation layer:** optional Groq or OpenAI LLM with a grounded template fallback
 - **Dashboard:** Streamlit
 - **Infra:** Docker Compose
 
@@ -80,6 +80,39 @@ uvicorn app.main:app --reload --port 8000
 
 The API is available at `http://127.0.0.1:8000`; interactive documentation is at `/docs`. Run Uvicorn from the `backend` directory so `app.main` resolves correctly. An LLM key is optional; without one, explanations use the deterministic template.
 
+### Explanation layer
+
+The API and dashboard load the repository-root `.env` file at startup without
+overriding variables already set in the real environment. Copy `.env.example` to
+`.env` and configure:
+
+| Variable | Purpose |
+|---|---|
+| `LLM_PROVIDER` | `groq` or `openai` |
+| `LLM_API_KEY` | API key for the selected provider; never included in responses or logs |
+| `LLM_MODEL` | Model name; defaults to the provider's configured default |
+
+Check connectivity (one short request; no key is printed) from the repository
+root:
+
+```powershell
+python scripts/check_llm.py
+```
+
+Each comparison includes a source label next to its explanation. **AI-generated
+(`<model>`)** means the LLM response passed evidence validation. **Template
+(`<reason>`)** means the deterministic fallback was used; the reason identifies
+why an LLM explanation was unavailable or rejected. Both are qualitative
+explanations for human review, not proof of attribution.
+
+The default Groq model is `openai/gpt-oss-20b`; set `LLM_MODEL` to override it.
+The dashboard generates explanations only when a pair is opened or when
+**Explain top 5** is selected. The Overview scores pairs without LLM calls.
+Explanations are cached by persona pair and model, calls run one at a time with
+at least one second between requests, and each session allows 30 LLM calls by
+default. If the provider rate-limits a request, the dashboard retries once,
+then uses template explanations for 60 seconds.
+
 ### Dashboard
 
 The dashboard runs standalone with the bundled synthetic dataset and in-process
@@ -97,6 +130,12 @@ can set the same key in App settings under Secrets; no API URL is needed for
 standalone deployment. Requests use the API when reachable and fall back to
 in-process scoring when it is unavailable. No model download or GPU is required.
 
+The dashboard opens at `http://localhost:8501` by default. Its Overview,
+Search, Compare, Timeline, Graph, and Export tabs use the active date filter.
+Overview progressively scores pairs in batches and shows the top results; it
+does not request LLM explanations. The sidebar displays the remaining
+explanation-call budget for the current session.
+
 For Streamlit Community Cloud, deploy this repository with `dashboard/app.py`
 as the Main file path. Community Cloud installs runtime dependencies from the
 root `requirements.txt`; leave `ATTRIBUTION_API_URL` unset to use standalone
@@ -109,13 +148,16 @@ Available endpoints: `GET /health`, `GET /personas`, `GET /personas/{id}`, `POST
 
 ### Confidence tiers
 
-API comparison and candidate results include an additive tier; the underlying confidence score is unchanged.
+API comparison and candidate results include a tier, `single_signal`, and the
+uncapped `raw_confidence`. A result with fewer than two pillars at or above the
+configured minimum is capped and labeled `lead`.
 
 | Tier | Fused confidence |
 |---|---:|
-| Strong | >= 0.90 |
-| Moderate | >= 0.70 and < 0.90 |
-| Weak | < 0.70 |
+| Strong | >= 0.90 with corroboration |
+| Moderate | >= 0.70 and < 0.90 with corroboration |
+| Weak | < 0.70 with corroboration |
+| Lead | Fewer than two pillars meet the configured minimum |
 
 These cutoffs were assessed on the synthetic dataset and are not proven to generalise. See [docs/confidence_tiers.md](docs/confidence_tiers.md) for the evaluation caveat.
 

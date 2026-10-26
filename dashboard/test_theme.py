@@ -21,7 +21,7 @@ def _contrast_ratio(first: str, second: str) -> float:
 
 
 def test_tier_badges_have_words_and_high_contrast_distinct_colors():
-    assert len(set(TIER_COLORS.values())) == 3
+    assert len(set(TIER_COLORS.values())) == 4
     for tier, background in TIER_COLORS.items():
         style = tier_badge_style(tier)
         assert f"background-color: {background}" in style

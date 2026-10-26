@@ -155,6 +155,11 @@ def test_candidate_export_uses_api_export_and_contains_shown_matches(monkeypatch
 
 def test_demo_candidates_and_tiers_match_api_path_for_p001(monkeypatch):
     monkeypatch.delenv("ATTRIBUTION_API_URL", raising=False)
+    monkeypatch.setenv("LLM_API_KEY", "")
+    from app.services.llm_explain import explainer
+    monkeypatch.setattr(explainer.httpx, "post", lambda *args, **kwargs: pytest.fail("HTTP is disabled for fallback parity test"))
+    explainer.reset_llm_controls()
+    client._demo_store()._pair_cache.clear()
     demo_candidates = client.get_candidates("P001", top=5)
     assert client.connection_status() == client.DEMO_MODE_LABEL
 
@@ -162,6 +167,7 @@ def test_demo_candidates_and_tiers_match_api_path_for_p001(monkeypatch):
     from app.main import app
     from urllib.parse import urlparse
 
+    app.state.store._pair_cache.clear()
     api_client = TestClient(app)
 
     def api_request(method, url, timeout, **kwargs):
@@ -187,3 +193,126 @@ def test_unreachable_api_falls_back_to_demo(monkeypatch):
     candidates = client.get_candidates("P001", top=2)
     assert len(candidates) == 2
     assert client.connection_status() == client.DEMO_MODE_LABEL
+
+
+def test_score_all_pairs_sorts_once_in_batches(monkeypatch):
+    from app.services.fusion import pipeline
+
+    people = [PERSONA, {**PERSONA, "persona_id": "P002"}, {**PERSONA, "persona_id": "P003"}]
+    def fake_score(a, b):
+        confidence = 0.9 if {a.persona_id, b.persona_id} == {"P001", "P002"} else 0.7
+        return {
+            "confidence": confidence, "raw_confidence": confidence, "tier": "strong" if confidence == 0.9 else "moderate",
+            "single_signal": False, "breakdown": {}, "evidence": {},
+        }
+    monkeypatch.setattr(pipeline, "score_pair", fake_score)
+    batches = []
+    result = client.score_all_pairs(people, batch_size=2, on_batch=lambda scored, total: batches.append((len(scored), total)))
+    assert len(result) == 3
+    assert [(row["persona_a"]["persona_id"], row["persona_b"]["persona_id"]) for row in result] == [
+        ("P001", "P002"), ("P001", "P003"), ("P002", "P003")
+    ]
+    assert batches == [(2, 3), (3, 3)]
+
+
+def test_persona_metrics_and_active_pair_filter():
+    people = [PERSONA, {**PERSONA, "persona_id": "P002", "marketplace": "market_beta"}]
+    pair = {"persona_a": people[0], "persona_b": people[1], "tier": "strong"}
+    metrics = client.persona_metrics(people, [pair])
+    assert metrics["personas"] == 2
+    assert metrics["sources"] == 2
+    assert metrics["identifiers"] == 2
+    assert metrics["strong"] == 1
+    assert client.filter_pairs([pair], {"P001": people[0], "P002": people[1]}) == [pair]
+    assert client.filter_pairs([pair], {"P001": people[0]}) == []
+
+
+def test_timeline_activity_clips_bars_and_counts_posts_by_week():
+    person = {
+        **PERSONA,
+        "texts": [
+            {"posted_at": "2024-02-05T10:00:00", "text": "one"},
+            {"posted_at": "2024-03-01T10:00:00", "text": "two"},
+        ],
+    }
+    result = client.timeline_activity([person], "2024-02-01", "2024-02-29")
+    assert result["bars"][0]["last_seen"] == "2024-02-29T00:00:00"
+    assert result["posts_per_week"] == [{"week": "2024-02-05", "Posts": 1}]
+
+
+def test_pair_exports_support_markdown_and_csv():
+    pair = {"persona_a": PERSONA, "persona_b": MATCH["persona"], "confidence": 0.92,
+            "tier": "strong", "breakdown": {"identity_graph": 0.9}}
+    markdown, markdown_mime = client.pairs_export_payload([pair], "markdown")
+    csv_text, csv_mime = client.pairs_export_payload([pair], "csv")
+    assert "# Scored pair report" in markdown and "P001" in markdown and markdown_mime == "text/markdown"
+    assert list(csv.DictReader(csv_text.splitlines()))[0]["tier"] == "strong"
+    assert csv_mime == "text/csv"
+
+
+def test_explanation_source_label_uses_api_metadata():
+    assert client.explanation_label({"explanation_label": "Template (no API key)"}) == "Template (no API key)"
+    assert client.explanation_label({"explanation_label": "AI-generated (openai/gpt-oss-20b)"}) == \
+        "AI-generated (openai/gpt-oss-20b)"
+
+
+def _comparison_pair():
+    return {
+        "persona_a": PERSONA,
+        "persona_b": MATCH["persona"],
+        "confidence": 0.5,
+        "breakdown": {"identity_graph": 0.0, "infrastructure": 0.0, "stylometry": 0.5},
+        "evidence": {
+            "identity_graph": [],
+            "infrastructure": [],
+            "stylometry": [{"kind": "style", "description": "style similarity is tentative"}],
+        },
+    }
+
+
+def test_overview_scoring_makes_zero_llm_calls(monkeypatch):
+    from app.services.llm_explain import explainer
+
+    monkeypatch.setenv("LLM_API_KEY", "sample-test-token-not-real")
+    monkeypatch.setattr(explainer.httpx, "post", lambda *args, **kwargs: pytest.fail("overview must not call LLM"))
+    batches = []
+    rows = client.score_all_pairs([PERSONA, MATCH["persona"]], batch_size=1, on_batch=lambda scored, total: batches.append((len(scored), total)))
+    assert len(rows) == 1
+    assert batches == [(1, 1)]
+
+
+def test_opening_pair_calls_llm_once_and_cached_pair_calls_none(monkeypatch):
+    from app.services.llm_explain import explainer
+
+    monkeypatch.setenv("LLM_API_KEY", "sample-test-token-not-real")
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
+    client.clear_explanation_cache()
+    explainer.reset_llm_controls()
+    calls = []
+
+    class Response:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "The evidence provides a tentative identity-graph signal."}}]}
+
+    monkeypatch.setattr(explainer.httpx, "post", lambda *args, **kwargs: (calls.append(kwargs) or Response()))
+    first = client.explain_pair(_comparison_pair(), budget_remaining=30)
+    second = client.explain_pair(_comparison_pair(), budget_remaining=30)
+    assert len(calls) == 1
+    assert first["llm_calls_used"] == 1
+    assert second["llm_calls_used"] == 0
+    assert second["cached"] is True
+
+
+def test_call_budget_prevents_llm_request(monkeypatch):
+    from app.services.llm_explain import explainer
+
+    monkeypatch.setenv("LLM_API_KEY", "sample-test-token-not-real")
+    client.clear_explanation_cache()
+    monkeypatch.setattr(explainer.httpx, "post", lambda *args, **kwargs: pytest.fail("budget must block HTTP"))
+    explanation = client.explain_pair(_comparison_pair(), budget_remaining=0)
+    assert explanation["llm_calls_used"] == 0
+    assert explanation["fallback_reason"] == "call_budget_exhausted"
+    assert explanation["explanation_source"] == "template"
