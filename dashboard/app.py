@@ -1,5 +1,6 @@
 """Local analyst dashboard. It consumes persona records and scores only."""
 
+from __future__ import annotations
 
 import sys
 from pathlib import Path
@@ -8,9 +9,6 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(ROOT_DIR))
 sys.path.append(str(ROOT_DIR / "backend"))
-
-
-from __future__ import annotations
 
 from datetime import date
 from html import escape
