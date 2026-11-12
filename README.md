@@ -48,6 +48,7 @@ backend/        FastAPI service: ingestion, graph building, fusion scoring, API
   app/services/llm_explain/           generates plain-language reasoning per match
    app/services/storage/               in-memory NetworkX persona/identifier graph
 dashboard/      Streamlit UI: search, actor profile, graph view, export
+frontend/       React + TypeScript + Vite UI: overview, search, compare, timeline, graph, export
 data/           raw/processed/veridark — see data/README.md before adding anything
 docker/         docker-compose for Neo4j + Postgres + backend + dashboard
 docs/           architecture, roadmap, ethics/data-sourcing, literature gap analysis
@@ -60,7 +61,8 @@ tests/          unit/integration tests
 - **Storage:** in-memory NetworkX graph (database persistence is future work)
 - **Stylometry:** sentence-transformers (embedding similarity)
 - **Explanation layer:** optional Groq or OpenAI LLM with a grounded template fallback
-- **Dashboard:** Streamlit
+- **Dashboard:** React + TypeScript + Vite (new frontend); Streamlit dashboard remains available
+- **Frontend UI:** Tailwind CSS, Framer Motion, Recharts, custom canvas/SVG particle visuals
 - **Infra:** Docker Compose
 
 ## Prerequisites
@@ -70,12 +72,13 @@ tests/          unit/integration tests
 ## Quickstart
 The current prototype uses the local synthetic dataset and in-memory NetworkX storage. No database, Docker service, or LLM key is required for the API.
 
-```powershell
+```bash
 git clone <this-repo-url>
 cd threat-actor-attribution
-python -m pip install -r backend/requirements.txt
+python -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
 cd backend
-uvicorn app.main:app --reload --port 8000
+../.venv/bin/python -m uvicorn app.main:app --reload --port 8000
 ```
 
 The API is available at `http://127.0.0.1:8000`; interactive documentation is at `/docs`. Run Uvicorn from the `backend` directory so `app.main` resolves correctly. An LLM key is optional; without one, explanations use the deterministic template.
@@ -143,6 +146,20 @@ demo mode. The dashboard only uses the bundled synthetic dataset in that mode.
 
 The date-range control filters by the persona's `first_seen` and `last_seen`
 fields.
+
+### React frontend
+
+The new React dashboard lives in `frontend/` and uses the existing FastAPI API.
+Start the API as described above, then in a second terminal run:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Vite opens at `http://localhost:5173` and proxies `/api` requests to
+`http://127.0.0.1:8000`. See `frontend/README.md` for route and deployment notes.
 
 Available endpoints: `GET /health`, `GET /personas`, `GET /personas/{id}`, `POST /compare`, `GET /personas/{id}/candidates`, and `GET /export?format=csv|json|report`. The `since` and `until` filters select personas whose observed date range overlaps the requested interval.
 
