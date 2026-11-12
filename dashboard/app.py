@@ -2,14 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# Adds the root repository directory and the backend folder to Python's path
-ROOT_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(ROOT_DIR))
-sys.path.append(str(ROOT_DIR / "backend"))
-
 from datetime import date
 from html import escape
 import os
