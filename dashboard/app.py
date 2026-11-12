@@ -36,16 +36,37 @@ from dashboard.client import (
 st.set_page_config(page_title="Attribution Review", page_icon="◈", layout="wide")
 st.markdown("""
 <style>
-.stApp { background: var(--background-color); }
-[data-testid="stSidebar"] { background: var(--secondary-background-color); }
-.slim-banner { border-left: 4px solid var(--primary-color); padding: .5rem .8rem;
-background: var(--secondary-background-color); border-radius: 5px; margin: .3rem 0 1rem; }
-.tier-pill { border-radius: 999px; padding: .18rem .58rem; font-size: .82rem;
-font-weight: 700; color: #fff; display: inline-block; }
-.metric-card { background: var(--secondary-background-color); border: 1px solid #303746;
-border-radius: 10px; padding: .85rem 1rem; min-height: 92px; }
-.explanation-box { background: var(--secondary-background-color); border-left: 3px solid var(--primary-color);
-border-radius: 6px; padding: .8rem 1rem; }
+:root { color-scheme: dark; }
+.stApp { background: radial-gradient(ellipse at 18% -8%, rgba(91, 54, 164, .20), transparent 38%), #0b0f19; color: #e6eaf2; }
+[data-testid="stMain"] > .main { background-image: radial-gradient(rgba(148,163,184,.105) .7px, transparent .7px); background-size: 25px 25px; }
+[data-testid="stSidebar"] { background: linear-gradient(180deg, #111827, #0d1320); border-right: 1px solid rgba(148,163,184,.14); }
+[data-testid="stSidebar"] [data-testid="stMetric"] { background: rgba(20,28,43,.8); border: 1px solid rgba(148,163,184,.15); border-radius: 14px; padding: .8rem; }
+.block-container { padding-top: 2.1rem; padding-bottom: 3rem; max-width: 1440px; }
+h1, h2, h3 { letter-spacing: -.035em; }
+h1 { font-size: 2.25rem !important; font-weight: 750 !important; }
+[data-testid="stTabs"] [role="tablist"] { gap: .35rem; border-bottom: 1px solid rgba(148,163,184,.16); }
+[data-testid="stTabs"] button[role="tab"] { border-radius: 10px 10px 0 0; padding: .7rem 1rem; color: #aab4c5; }
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] { color: #c4b5fd; border-bottom-color: #8b5cf6; }
+[data-testid="stVerticalBlockBorderWrapper"] { border-color: rgba(148,163,184,.16) !important; border-radius: 16px !important; }
+[data-testid="stDataFrame"] { border: 1px solid rgba(148,163,184,.15); border-radius: 12px; overflow: hidden; }
+div.stButton > button, div[data-testid="stDownloadButton"] > button { border-radius: 10px; border: 1px solid rgba(139,92,246,.42); transition: all .18s ease; }
+div.stButton > button:hover, div[data-testid="stDownloadButton"] > button:hover { border-color: #22d3ee; color: #e0faff; box-shadow: 0 0 18px rgba(34,211,238,.12); }
+.hero { position: relative; overflow: hidden; padding: 1.4rem 1.55rem; margin: .2rem 0 1rem; border: 1px solid rgba(148,163,184,.17); border-radius: 18px; background: linear-gradient(115deg, rgba(22,29,46,.96), rgba(19,22,39,.85)); box-shadow: 0 14px 40px rgba(0,0,0,.2); }
+.hero:after { content: ""; position: absolute; inset: 0 0 0 auto; width: 42%; opacity: .35; pointer-events: none; background-image: radial-gradient(circle, #a78bfa 1px, transparent 1.6px), radial-gradient(circle, #22d3ee .8px, transparent 1.5px); background-size: 24px 24px, 37px 37px; background-position: 0 0, 11px 9px; mask-image: linear-gradient(90deg, transparent, #000); }
+.hero-kicker { color: #67e8f9; text-transform: uppercase; letter-spacing: .16em; font-size: .72rem; font-weight: 700; }
+.hero-title { margin: .35rem 0 .3rem; color: #f8fafc; font-size: 1.75rem; font-weight: 750; letter-spacing: -.04em; }
+.hero-copy { color: #aab4c5; font-size: .94rem; }
+.slim-banner { border: 1px solid rgba(139,92,246,.28); border-left: 3px solid #8b5cf6; padding: .75rem 1rem;
+background: linear-gradient(100deg, rgba(124,58,237,.12), rgba(17,24,39,.7)); border-radius: 10px; margin: .3rem 0 1.2rem; color: #d8deea; }
+.tier-pill { border-radius: 999px; padding: .22rem .65rem; font-size: .72rem; letter-spacing: .05em;
+font-weight: 750; color: #fff; display: inline-block; border: 1px solid rgba(255,255,255,.16); }
+.metric-card { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(24,32,49,.95), rgba(15,22,35,.95)); border: 1px solid rgba(148,163,184,.16);
+border-radius: 14px; padding: 1rem 1.1rem; min-height: 108px; box-shadow: 0 10px 26px rgba(0,0,0,.16); }
+.metric-card small { color: #9aa7ba; font-size: .76rem; letter-spacing: .07em; text-transform: uppercase; }
+.metric-card h3 { margin: .45rem 0 0; font-size: 1.55rem; color: #f5f7fb; }
+.explanation-box { background: rgba(18,26,41,.9); border: 1px solid rgba(34,211,238,.2); border-left: 3px solid #22d3ee;
+border-radius: 10px; padding: .9rem 1rem; color: #dbe5f2; }
+.section-note { color: #94a3b8; font-size: .86rem; }
 </style>""", unsafe_allow_html=True)
 
 
@@ -84,8 +105,7 @@ def display_pairs(rows: list[dict], limit: int | None = None) -> None:
     })
 
 
-st.title("Attribution Review")
-st.caption("Evidence-led triage · Local dataset")
+st.markdown('<div class="hero"><div class="hero-kicker">Threat intelligence · Attribution workspace</div><div class="hero-title">Attribution Review</div><div class="hero-copy">Evidence-led triage across identity, infrastructure, and writing signals.</div></div>', unsafe_allow_html=True)
 st.markdown('<div class="slim-banner"><b>Scores are review leads, not proof of attribution.</b> Strong and Moderate require corroboration; single-signal results are Leads.</div>', unsafe_allow_html=True)
 with st.expander("How to interpret this dashboard"):
     st.write("Confidence scores use identity, infrastructure, and writing-style signals. Tier rules were evaluated on synthetic data and are not calibrated probabilities. Review underlying evidence before drawing conclusions.")
@@ -251,6 +271,7 @@ with tabs[3]:
 
 with tabs[4]:
     st.subheader("Candidate graph")
+    st.markdown('<div class="section-note">Explore the strongest scored links around a selected persona. Node colors indicate confidence tier; hover for persona details.</div>', unsafe_allow_html=True)
     if ids:
         center_id = st.selectbox("Centre persona", ids, key="graph_center")
         rows = []
@@ -264,6 +285,8 @@ with tabs[4]:
                 break
         if rows:
             st.plotly_chart(build_candidate_graph(persona_by_id[center_id], rows), use_container_width=True)
+        else:
+            st.info("No candidate links are available in the selected date range.")
         st.markdown(" ".join(tier_pill(t) for t in ("strong", "moderate", "lead", "weak")), unsafe_allow_html=True)
         st.caption("Edge colour shows the confidence tier. Edge labels show the strongest pillar.")
 

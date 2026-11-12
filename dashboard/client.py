@@ -499,39 +499,58 @@ def build_candidate_graph(persona: dict, candidates: list[dict]) -> go.Figure:
                 font={"size": 11, "color": TIER_TEXT_COLOR},
                 borderpad=4,
             )
-        for outline_color, outline_width in (("#ffffff", 8), ("#000000", 6)):
-            figure.add_trace(
-                go.Scatter(
-                    x=edge_x,
-                    y=edge_y,
-                    mode="lines",
-                    line={"color": outline_color, "width": outline_width},
-                    hoverinfo="skip",
-                    showlegend=False,
-                )
-            )
+        # A soft tier-colored underlay gives the links a restrained neon glow
+        # while keeping the graph readable on the dashboard's dark surface.
         figure.add_trace(
             go.Scatter(
                 x=edge_x,
                 y=edge_y,
                 mode="lines",
-                line={"color": TIER_COLORS[tier_name], "width": 3},
+                line={"color": TIER_COLORS[tier_name], "width": 12},
+                opacity=0.12,
                 hoverinfo="skip",
                 showlegend=False,
             )
+        )
+        figure.add_trace(
+            go.Scatter(
+                x=edge_x,
+                y=edge_y,
+                mode="lines",
+                line={"color": TIER_COLORS[tier_name], "width": 2.5},
+                opacity=0.9,
+                hoverinfo="skip",
+                showlegend=False,
             )
+        )
 
     for tier_name in ("selected", "strong", "moderate", "weak", "lead"):
         node_ids = [node for node, attrs in graph.nodes(data=True) if attrs["tier"] == tier_name]
         if not node_ids:
             continue
         color = "#174a7e" if tier_name == "selected" else TIER_COLORS[tier_name]
+        # Larger transparent markers sit beneath the nodes as a subtle halo.
         figure.add_trace(
             go.Scatter(
                 x=[positions[node][0] for node in node_ids],
                 y=[positions[node][1] for node in node_ids],
                 mode="markers",
-                marker={"size": 22 if tier_name == "selected" else 17, "color": color},
+                marker={"size": [36 if tier_name == "selected" else 29] * len(node_ids), "color": color},
+                opacity=0.16,
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+        figure.add_trace(
+            go.Scatter(
+                x=[positions[node][0] for node in node_ids],
+                y=[positions[node][1] for node in node_ids],
+                mode="markers",
+                marker={
+                    "size": 20 if tier_name == "selected" else 15,
+                    "color": color,
+                    "line": {"color": "#dbeafe" if tier_name == "selected" else "#cbd5e1", "width": 1.2},
+                },
                 name="Selected" if tier_name == "selected" else tier_name.title(),
                 hovertemplate="%{text}<extra></extra>",
                 text=[graph.nodes[node]["label"] for node in node_ids],
@@ -545,19 +564,21 @@ def build_candidate_graph(persona: dict, candidates: list[dict]) -> go.Figure:
                 y=positions[node][1],
                 text=graph.nodes[node]["label"],
                 showarrow=False,
-                bgcolor=color,
-                bordercolor=TIER_TEXT_COLOR,
+                bgcolor="rgba(11,15,25,.88)",
+                bordercolor=color,
                 borderwidth=1,
                 borderpad=5,
-                font={"size": 11, "color": TIER_TEXT_COLOR},
+                font={"size": 11, "color": "#e2e8f0"},
             )
     figure.update_layout(
-        height=720,
-        margin={"l": 20, "r": 20, "t": 20, "b": 20},
-        plot_bgcolor="rgba(0,0,0,0)",
+        height=680,
+        margin={"l": 24, "r": 24, "t": 24, "b": 24},
+        plot_bgcolor="rgba(11,15,25,.72)",
         paper_bgcolor="rgba(0,0,0,0)",
-        xaxis={"visible": False},
-        yaxis={"visible": False},
+        font={"family": "Inter, ui-sans-serif, system-ui", "color": "#cbd5e1"},
+        hoverlabel={"bgcolor": "#111827", "bordercolor": "#475569", "font": {"color": "#e2e8f0"}},
+        xaxis={"visible": False, "fixedrange": True},
+        yaxis={"visible": False, "fixedrange": True},
         showlegend=False,
     )
     return figure
